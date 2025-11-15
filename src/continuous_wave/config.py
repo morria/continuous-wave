@@ -88,13 +88,9 @@ class CWConfig:
             raise ValueError(f"AGC release time must be positive, got {self.agc_release_ms}")
 
         if not 0.0 <= self.squelch_threshold <= 1.0:
-            raise ValueError(
-                f"Squelch threshold must be in [0, 1], got {self.squelch_threshold}"
-            )
+            raise ValueError(f"Squelch threshold must be in [0, 1], got {self.squelch_threshold}")
         if not 0.0 <= self.squelch_hysteresis <= 1.0:
-            raise ValueError(
-                f"Squelch hysteresis must be in [0, 1], got {self.squelch_hysteresis}"
-            )
+            raise ValueError(f"Squelch hysteresis must be in [0, 1], got {self.squelch_hysteresis}")
 
         if not 0.0 <= self.tone_threshold <= 1.0:
             raise ValueError(f"Tone threshold must be in [0, 1], got {self.tone_threshold}")
