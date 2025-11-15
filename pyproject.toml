@@ -28,6 +28,10 @@ dependencies = [
     "sounddevice>=0.4.6",
 ]
 
+[project.scripts]
+cw-decode = "continuous_wave.cli:main_soundcard"
+cw-decode-file = "continuous_wave.cli:main_file"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
