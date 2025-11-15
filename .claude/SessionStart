@@ -1,0 +1,124 @@
+#!/bin/bash
+# Claude Code SessionStart Hook
+# This script runs when a new Claude Code session starts
+# It ensures the development environment is properly configured
+
+set -e
+
+# Color output
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}   Continuous-Wave CW Parser - Development Setup${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo
+
+# Check Python version
+echo -e "${BLUE}Checking Python version...${NC}"
+PYTHON_VERSION=$(python --version 2>&1 | awk '{print $2}')
+PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
+PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
+
+if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 11 ]); then
+    echo -e "${RED}✗ Python 3.11+ required (found $PYTHON_VERSION)${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✓ Python $PYTHON_VERSION${NC}"
+
+# Check if in git repository
+echo -e "${BLUE}Checking git repository...${NC}"
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo -e "${RED}✗ Not in a git repository${NC}"
+    exit 1
+fi
+CURRENT_BRANCH=$(git branch --show-current)
+echo -e "${GREEN}✓ Git repository (branch: $CURRENT_BRANCH)${NC}"
+
+# Check if dependencies are installed
+echo -e "${BLUE}Checking dependencies...${NC}"
+if ! python -c "import continuous_wave" 2>/dev/null; then
+    echo -e "${YELLOW}⚠ Package not installed. Installing development dependencies...${NC}"
+    pip install -e . -q
+    pip install -r requirements-dev.txt -q
+    echo -e "${GREEN}✓ Development dependencies installed${NC}"
+else
+    echo -e "${GREEN}✓ Package already installed${NC}"
+fi
+
+# Verify key tools are available
+echo -e "${BLUE}Verifying development tools...${NC}"
+MISSING_TOOLS=()
+
+if ! command -v pytest &> /dev/null; then
+    MISSING_TOOLS+=("pytest")
+fi
+
+if ! command -v mypy &> /dev/null; then
+    MISSING_TOOLS+=("mypy")
+fi
+
+if ! command -v ruff &> /dev/null; then
+    MISSING_TOOLS+=("ruff")
+fi
+
+if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
+    echo -e "${YELLOW}⚠ Missing tools: ${MISSING_TOOLS[*]}${NC}"
+    echo -e "${YELLOW}  Installing missing tools...${NC}"
+    pip install -r requirements-dev.txt -q
+    echo -e "${GREEN}✓ Tools installed${NC}"
+else
+    echo -e "${GREEN}✓ All development tools available${NC}"
+fi
+
+# Run quick sanity check
+echo -e "${BLUE}Running sanity checks...${NC}"
+
+# Check if tests can be discovered
+TEST_COUNT=$(pytest --collect-only -q 2>/dev/null | tail -1 | awk '{print $1}')
+if [ -n "$TEST_COUNT" ]; then
+    echo -e "${GREEN}✓ $TEST_COUNT tests discovered${NC}"
+fi
+
+# Check mypy configuration
+if python -m mypy src/continuous_wave --strict --no-error-summary 2>&1 | grep -q "Success"; then
+    echo -e "${GREEN}✓ Type checking configured correctly${NC}"
+else
+    echo -e "${YELLOW}⚠ Type checking may have issues${NC}"
+fi
+
+# Check ruff configuration
+if ruff check src/ tests/ --quiet 2>/dev/null; then
+    echo -e "${GREEN}✓ Code style is clean${NC}"
+else
+    echo -e "${YELLOW}⚠ Some linting issues found (run 'make lint-fix')${NC}"
+fi
+
+# Show git status
+echo
+echo -e "${BLUE}Git status:${NC}"
+git status --short | head -10
+
+# Show available make targets
+echo
+echo -e "${BLUE}Available commands:${NC}"
+echo -e "  ${GREEN}make test${NC}         - Run tests with coverage"
+echo -e "  ${GREEN}make lint${NC}         - Run linting checks"
+echo -e "  ${GREEN}make type-check${NC}   - Run type checking"
+echo -e "  ${GREEN}make format${NC}       - Format code"
+echo -e "  ${GREEN}make pre-commit${NC}   - Run all pre-commit checks"
+echo -e "  ${GREEN}make help${NC}         - Show all available targets"
+
+echo
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}✓ Development environment ready!${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo
+
+# Show recent commits
+echo -e "${BLUE}Recent commits:${NC}"
+git log --oneline -5 --decorate --color=always
+echo

@@ -1,10 +1,24 @@
 """Pytest configuration and fixtures."""
 
+import logging
+
 import numpy as np
 import pytest
 
 from continuous_wave.config import CWConfig
+from continuous_wave.logging import setup_logging
 from continuous_wave.models import AudioSample
+
+
+# Configure logging for tests
+def pytest_configure(config: pytest.Config) -> None:
+    """Configure pytest with enhanced logging for better visibility."""
+    # Set up detailed logging for tests
+    setup_logging(
+        level=logging.DEBUG,
+        format_string="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        use_color=True,
+    )
 
 
 @pytest.fixture
