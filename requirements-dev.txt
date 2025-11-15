@@ -1,0 +1,26 @@
+# Development dependencies for continuous-wave
+
+# Include core dependencies
+-r requirements.txt
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-benchmark>=4.0.0
+hypothesis>=6.82.0
+
+# Type checking
+mypy>=1.5.0
+scipy-stubs>=1.1.0
+
+# Linting and formatting
+ruff>=0.0.280
+black>=23.7.0
+
+# Pre-commit hooks
+pre-commit>=3.3.0
+
+# Build tools
+build>=0.10.0
+twine>=4.0.0
