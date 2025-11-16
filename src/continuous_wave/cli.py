@@ -5,7 +5,6 @@ import asyncio
 import curses
 import sys
 from pathlib import Path
-from typing import Optional
 
 from continuous_wave.audio.file import WavFileSource
 from continuous_wave.audio.soundcard import SoundcardSource
@@ -60,10 +59,10 @@ class CursesUI:
 
     def update_status(
         self,
-        frequency: Optional[float] = None,
-        snr_db: Optional[float] = None,
-        wpm: Optional[float] = None,
-        dot_duration: Optional[float] = None,
+        frequency: float | None = None,
+        snr_db: float | None = None,
+        wpm: float | None = None,
+        dot_duration: float | None = None,
         freq_locked: bool = False,
         timing_locked: bool = False,
         chars_decoded: int = 0,
@@ -154,10 +153,10 @@ class CursesUI:
             # Wrap long lines
             for i in range(0, len(line), width - 4):
                 chunk = line[i : i + width - 4]
-                try:
+                from contextlib import suppress
+
+                with suppress(curses.error):
                     self.output_win.addstr(row, 2, chunk)
-                except curses.error:
-                    pass  # Ignore errors from writing at edge
                 row -= 1
                 if row <= 1:
                     break
@@ -175,7 +174,7 @@ async def run_decoder_simple(pipeline: CWDecoderPipeline) -> None:
     print("=" * 60)
 
     try:
-        async for char, state in pipeline.run():
+        async for char, _state in pipeline.run():
             # Print character immediately
             print(char.char, end="", flush=True)
 
@@ -206,12 +205,12 @@ async def run_decoder_curses(pipeline: CWDecoderPipeline, stdscr) -> None:
     try:
         async for char, state in pipeline.run():
             # Check for quit key (q)
-            try:
+            from contextlib import suppress
+
+            with suppress(Exception):
                 key = stdscr.getch()
                 if key == ord("q"):
                     break
-            except:
-                pass
 
             # Accumulate output
             output_line += char.char
@@ -251,9 +250,7 @@ async def run_decoder_curses(pipeline: CWDecoderPipeline, stdscr) -> None:
 
 def main_soundcard() -> None:
     """Main entry point for soundcard decoder (cw-decode)."""
-    parser = argparse.ArgumentParser(
-        description="CW (Morse code) decoder - reads from soundcard"
-    )
+    parser = argparse.ArgumentParser(description="CW (Morse code) decoder - reads from soundcard")
     parser.add_argument(
         "--curses",
         action="store_true",
@@ -288,9 +285,9 @@ def main_soundcard() -> None:
 
     # Create configuration
     config = CWConfig()
-    config.audio.sample_rate = args.sample_rate
-    config.frequency.min_frequency = args.min_freq
-    config.frequency.max_frequency = args.max_freq
+    config.sample_rate = args.sample_rate
+    config.freq_range[0] = args.min_freq
+    config.freq_range[1] = args.max_freq
 
     # Create pipeline components
     audio_source = SoundcardSource(config=config, device=args.device)
@@ -325,9 +322,7 @@ def main_soundcard() -> None:
 
 def main_file() -> None:
     """Main entry point for file decoder (cw-decode-file)."""
-    parser = argparse.ArgumentParser(
-        description="CW (Morse code) decoder - reads from WAV file"
-    )
+    parser = argparse.ArgumentParser(description="CW (Morse code) decoder - reads from WAV file")
     parser.add_argument("file", type=Path, help="WAV file to decode")
     parser.add_argument(
         "--curses",
@@ -357,9 +352,9 @@ def main_file() -> None:
 
     # Create configuration
     config = CWConfig()
-    config.audio.sample_rate = args.sample_rate
-    config.frequency.min_frequency = args.min_freq
-    config.frequency.max_frequency = args.max_freq
+    config.sample_rate = args.sample_rate
+    config.freq_range[0] = args.min_freq
+    config.freq_range[1] = args.max_freq
 
     # Create pipeline components
     audio_source = WavFileSource(config=config, file_path=args.file)

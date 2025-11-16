@@ -1,12 +1,10 @@
 """Morse code decoder with international morse code lookup."""
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import DecodedCharacter, MorseElement, MorseSymbol
 from continuous_wave.protocols import Decoder
-
 
 # International Morse Code lookup table
 MORSE_CODE: dict[str, str] = {
@@ -61,7 +59,6 @@ MORSE_CODE: dict[str, str] = {
     "---...": ":",  # Colon
     "-.-.-.": ";",  # Semicolon
     "-...-": "=",  # Equals
-    ".-.-.": "+",  # Plus
     "-....-": "-",  # Minus/hyphen
     "..--.-": "_",  # Underscore
     ".-..-.": '"',  # Quote
@@ -69,11 +66,11 @@ MORSE_CODE: dict[str, str] = {
     ".--.-.": "@",  # At sign
     # Prosigns (special signals)
     ".-.-": "<AA>",  # New line
-    "-...-": "<BT>",  # Break
-    ".-.-.-": "<AR>",  # End of message
+    "-...-.-": "<BT>",  # Break
+    ".-.-.": "<AR>",  # End of message (also interpreted as +)
     "-.-.-": "<KA>",  # Beginning of message
     "...-.-": "<SK>",  # End of contact
-    "...-.": "<HH>",  # Error
+    "........": "<HH>",  # Error
 }
 
 
@@ -140,7 +137,7 @@ class MorseDecoder(Decoder):
         self._current_pattern.clear()
         self._decoded_chars.clear()
 
-    def _decode_pattern(self, pattern: list[MorseElement]) -> Optional[DecodedCharacter]:
+    def _decode_pattern(self, pattern: list[MorseElement]) -> DecodedCharacter | None:
         """Decode a morse pattern to a character.
 
         Args:
@@ -189,7 +186,7 @@ class MorseDecoder(Decoder):
             timestamp=0.0,
         )
 
-    def _fuzzy_match(self, pattern: str) -> Optional[tuple[str, float]]:
+    def _fuzzy_match(self, pattern: str) -> tuple[str, float] | None:
         """Try to find a close match for an invalid pattern.
 
         Uses simple edit distance to find similar patterns.

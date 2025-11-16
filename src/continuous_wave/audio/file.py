@@ -1,10 +1,9 @@
 """WAV file audio input source."""
 
-import asyncio
 import wave
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import AsyncIterator, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -24,7 +23,7 @@ class WavFileSource(AudioSource):
 
     config: CWConfig
     file_path: Path
-    _wav_file: Optional[wave.Wave_read] = field(default=None, init=False)
+    _wav_file: wave.Wave_read | None = field(default=None, init=False)
     _file_sample_rate: int = field(default=0, init=False)
     _num_channels: int = field(default=0, init=False)
     _sample_width: int = field(default=0, init=False)
@@ -40,7 +39,8 @@ class WavFileSource(AudioSource):
         if not self.file_path.exists():
             raise FileNotFoundError(f"WAV file not found: {self.file_path}")
 
-        self._wav_file = wave.open(str(self.file_path), "rb")
+        # Open file and keep it open for streaming (closed in close() method)
+        self._wav_file = wave.open(str(self.file_path), "rb")  # noqa: SIM115
         self._file_sample_rate = self._wav_file.getframerate()
         self._num_channels = self._wav_file.getnchannels()
         self._sample_width = self._wav_file.getsampwidth()
@@ -53,7 +53,7 @@ class WavFileSource(AudioSource):
                 f"Supported: 1, 2, or 4 bytes."
             )
 
-    async def read(self) -> Optional[AudioSample]:
+    async def read(self) -> AudioSample | None:
         """Read one chunk of audio from WAV file.
 
         Returns:
@@ -63,7 +63,7 @@ class WavFileSource(AudioSource):
             return None
 
         # Read chunk of frames
-        frames = self._wav_file.readframes(self.config.audio.chunk_size)
+        frames = self._wav_file.readframes(self.config.chunk_size)
 
         if len(frames) == 0:
             # End of file
@@ -74,21 +74,21 @@ class WavFileSource(AudioSource):
 
         # Convert to mono if stereo
         if self._num_channels > 1:
-            audio_data = audio_data[::self._num_channels]
+            audio_data = audio_data[:: self._num_channels]
 
         # Resample if needed
-        if self._file_sample_rate != self.config.audio.sample_rate:
+        if self._file_sample_rate != self.config.sample_rate:
             audio_data = self._resample(audio_data)
 
         # Update timestamp based on samples read
         sample = AudioSample(
             data=audio_data,
-            sample_rate=self.config.audio.sample_rate,
+            sample_rate=self.config.sample_rate,
             timestamp=self._current_timestamp,
         )
 
         # Increment timestamp
-        duration = len(audio_data) / self.config.audio.sample_rate
+        duration = len(audio_data) / self.config.sample_rate
         self._current_timestamp += duration
 
         return sample
@@ -147,9 +147,7 @@ class WavFileSource(AudioSource):
             Resampled audio at config sample rate
         """
         # Calculate number of output samples
-        num_samples = int(
-            len(audio) * self.config.audio.sample_rate / self._file_sample_rate
-        )
+        num_samples = int(len(audio) * self.config.sample_rate / self._file_sample_rate)
 
         # Use scipy's resample for high-quality resampling
         resampled = sp_signal.resample(audio, num_samples)

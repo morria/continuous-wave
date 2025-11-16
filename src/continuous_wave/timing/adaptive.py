@@ -2,7 +2,6 @@
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Optional
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import MorseElement, MorseSymbol, TimingStats, ToneEvent
@@ -20,11 +19,11 @@ class AdaptiveWPMDetector(TimingAnalyzer):
     """
 
     config: CWConfig
-    _last_event: Optional[ToneEvent] = field(default=None, init=False)
+    _last_event: ToneEvent | None = field(default=None, init=False)
     _dot_durations: deque[float] = field(default_factory=lambda: deque(maxlen=20), init=False)
     _dash_durations: deque[float] = field(default_factory=lambda: deque(maxlen=20), init=False)
-    _estimated_dot_duration: Optional[float] = field(default=None, init=False)
-    _estimated_wpm: Optional[float] = field(default=None, init=False)
+    _estimated_dot_duration: float | None = field(default=None, init=False)
+    _estimated_wpm: float | None = field(default=None, init=False)
     _lock_count: int = field(default=0, init=False)
     _required_lock_samples: int = field(default=10, init=False)
 
@@ -66,7 +65,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
         self._last_event = event
         return symbols
 
-    def timing_stats(self) -> Optional[TimingStats]:
+    def timing_stats(self) -> TimingStats | None:
         """Get current timing statistics.
 
         Returns:
@@ -104,7 +103,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
         self._estimated_wpm = None
         self._lock_count = 0
 
-    def _classify_tone(self, duration: float) -> Optional[MorseSymbol]:
+    def _classify_tone(self, duration: float) -> MorseSymbol | None:
         """Classify a tone duration as dot or dash.
 
         Args:
@@ -162,7 +161,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
                     timestamp=0.0,
                 )
 
-    def _classify_gap(self, duration: float) -> Optional[MorseSymbol]:
+    def _classify_gap(self, duration: float) -> MorseSymbol | None:
         """Classify a gap duration.
 
         Args:
@@ -227,7 +226,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
         # PARIS standard: WPM = 1.2 / dot_duration
         wpm_estimate = 1.2 / dot_estimate
 
-        if not (self.config.timing.min_wpm <= wpm_estimate <= self.config.timing.max_wpm):
+        if not (self.config.min_wpm <= wpm_estimate <= self.config.max_wpm):
             # Invalid WPM - don't update
             return
 
@@ -244,9 +243,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
 
             # Check if estimate is stable
             if abs(new_wpm - self._estimated_wpm) < 2.0:  # Within 2 WPM
-                self._lock_count = min(
-                    self._lock_count + 1, self._required_lock_samples + 10
-                )
+                self._lock_count = min(self._lock_count + 1, self._required_lock_samples + 10)
             else:
                 self._lock_count = max(0, self._lock_count - 1)
 

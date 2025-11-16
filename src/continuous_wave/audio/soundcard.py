@@ -2,8 +2,9 @@
 
 import asyncio
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, AsyncIterator, Optional
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,7 +14,7 @@ from continuous_wave.models import AudioSample
 from continuous_wave.protocols import AudioSource
 
 if TYPE_CHECKING:
-    import sounddevice as sd
+    pass
 
 
 @dataclass
@@ -25,8 +26,8 @@ class SoundcardSource(AudioSource):
     """
 
     config: CWConfig
-    device: Optional[int | str] = None
-    _stream: Optional[Any] = field(default=None, init=False)
+    device: int | str | None = None
+    _stream: Any | None = field(default=None, init=False)
     _queue: asyncio.Queue[NDArray[np.float64]] = field(default=None, init=False)
     _is_running: bool = field(default=False, init=False)
 
@@ -48,7 +49,7 @@ class SoundcardSource(AudioSource):
 
         return AudioSample(
             data=audio_data,
-            sample_rate=self.config.audio.sample_rate,
+            sample_rate=self.config.sample_rate,
             timestamp=time.time(),
         )
 
@@ -85,8 +86,8 @@ class SoundcardSource(AudioSource):
 
         def audio_callback(
             indata: NDArray[np.float64],
-            frames: int,
-            time_info: dict,
+            _frames: int,
+            _time_info: dict,
             status: Any,
         ) -> None:
             """Callback for audio input.
@@ -98,24 +99,20 @@ class SoundcardSource(AudioSource):
                 pass
 
             # Convert to mono if stereo
-            if len(indata.shape) > 1:
-                audio = indata[:, 0].copy()
-            else:
-                audio = indata.copy()
+            audio = indata[:, 0].copy() if len(indata.shape) > 1 else indata.copy()
 
             # Put in queue (non-blocking)
-            try:
+            from contextlib import suppress
+
+            with suppress(asyncio.QueueFull):
                 self._queue.put_nowait(audio)
-            except asyncio.QueueFull:
-                # Drop frame if queue is full
-                pass
 
         # Create and start stream
         self._stream = sd.InputStream(
             device=self.device,
             channels=1,
-            samplerate=self.config.audio.sample_rate,
-            blocksize=self.config.audio.chunk_size,
+            samplerate=self.config.sample_rate,
+            blocksize=self.config.chunk_size,
             dtype=np.float64,
             callback=audio_callback,
         )

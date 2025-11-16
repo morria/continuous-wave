@@ -1,8 +1,8 @@
 """Main CW decoder pipeline orchestration."""
 
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator, Optional
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import DecodedCharacter, SignalStats, TimingStats
@@ -20,8 +20,8 @@ from continuous_wave.signal.noise import NoiseReductionPipeline
 class CWDecoderState:
     """Current state of the CW decoder."""
 
-    frequency_stats: Optional[SignalStats] = None
-    timing_stats: Optional[TimingStats] = None
+    frequency_stats: SignalStats | None = None
+    timing_stats: TimingStats | None = None
     is_frequency_locked: bool = False
     is_timing_locked: bool = False
     characters_decoded: int = 0

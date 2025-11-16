@@ -1,11 +1,9 @@
 """Frequency detection for CW signals using FFT and Goertzel algorithm."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy import signal
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import SignalStats
@@ -21,17 +19,17 @@ class FrequencyDetectorImpl(FrequencyDetector):
     """
 
     config: CWConfig
-    _current_frequency: Optional[float] = None
+    _current_frequency: float | None = None
     _lock_count: int = 0
     _required_lock_samples: int = 5
-    _fft_window: Optional[NDArray[np.float64]] = None
+    _fft_window: NDArray[np.float64] | None = None
 
     def __post_init__(self) -> None:
         """Initialize FFT window for spectral analysis."""
         # Create Hann window for FFT to reduce spectral leakage
-        self._fft_window = np.hanning(self.config.audio.chunk_size)
+        self._fft_window = np.hanning(self.config.chunk_size)
 
-    def detect(self, audio: NDArray[np.float64]) -> Optional[SignalStats]:
+    def detect(self, audio: NDArray[np.float64]) -> SignalStats | None:
         """Detect frequency and signal characteristics.
 
         Args:
@@ -40,7 +38,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
         Returns:
             SignalStats with detected frequency and SNR, or None if no signal
         """
-        if len(audio) < self.config.audio.chunk_size // 2:
+        if len(audio) < self.config.chunk_size // 2:
             return None
 
         if self._current_frequency is None or not self.is_locked():
@@ -63,7 +61,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
         self._current_frequency = None
         self._lock_count = 0
 
-    def _fft_detect(self, audio: NDArray[np.float64]) -> Optional[SignalStats]:
+    def _fft_detect(self, audio: NDArray[np.float64]) -> SignalStats | None:
         """Detect frequency using FFT across search range.
 
         Args:
@@ -78,11 +76,11 @@ class FrequencyDetectorImpl(FrequencyDetector):
         power_spectrum = np.abs(fft) ** 2
 
         # Convert bin indices to frequencies
-        freqs = np.fft.rfftfreq(len(windowed), 1 / self.config.audio.sample_rate)
+        freqs = np.fft.rfftfreq(len(windowed), 1 / self.config.sample_rate)
 
         # Find peaks in the frequency range of interest
-        min_freq = self.config.frequency.min_frequency
-        max_freq = self.config.frequency.max_frequency
+        min_freq = self.config.freq_range[0]
+        max_freq = self.config.freq_range[1]
 
         # Mask to search range
         freq_mask = (freqs >= min_freq) & (freqs <= max_freq)
@@ -105,13 +103,12 @@ class FrequencyDetectorImpl(FrequencyDetector):
             noise_floor = np.median(power_spectrum[freq_mask])
 
         # Calculate SNR in dB
-        if noise_floor > 0:
-            snr_db = 10 * np.log10(peak_power / noise_floor)
-        else:
-            snr_db = 100.0  # Very strong signal
+        snr_db = (
+            10 * np.log10(peak_power / noise_floor) if noise_floor > 0 else 100.0
+        )  # Very strong signal if noise_floor is 0
 
         # Check if SNR meets threshold
-        if snr_db < self.config.frequency.min_snr_db:
+        if snr_db < self.config.min_snr_db:
             self._lock_count = 0
             self._current_frequency = None
             return None
@@ -124,9 +121,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
             self._lock_count += 1
             # Smooth frequency estimate
             alpha = 0.3
-            self._current_frequency = (
-                alpha * peak_freq + (1 - alpha) * self._current_frequency
-            )
+            self._current_frequency = alpha * peak_freq + (1 - alpha) * self._current_frequency
         else:
             # Frequency jumped - restart lock
             self._current_frequency = peak_freq
@@ -139,9 +134,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
             timestamp=0.0,  # Will be set by pipeline
         )
 
-    def _goertzel_track(
-        self, audio: NDArray[np.float64], target_freq: float
-    ) -> Optional[SignalStats]:
+    def _goertzel_track(self, audio: NDArray[np.float64], target_freq: float) -> SignalStats | None:
         """Track a specific frequency using Goertzel algorithm.
 
         More efficient than FFT when tracking a single frequency.
@@ -155,7 +148,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
         """
         # Goertzel algorithm for single frequency
         N = len(audio)
-        k = int(0.5 + (N * target_freq) / self.config.audio.sample_rate)
+        k = int(0.5 + (N * target_freq) / self.config.sample_rate)
         w = (2.0 * np.pi * k) / N
         cosine = np.cos(w)
         sine = np.sin(w)
@@ -181,22 +174,15 @@ class FrequencyDetectorImpl(FrequencyDetector):
         noise_power = 0.0
         for offset in [-50, 50]:  # Check ±50Hz
             offset_freq = target_freq + offset
-            if (
-                self.config.frequency.min_frequency
-                <= offset_freq
-                <= self.config.frequency.max_frequency
-            ):
+            if self.config.freq_range[0] <= offset_freq <= self.config.freq_range[1]:
                 noise_power += self._goertzel_power(audio, offset_freq)
         noise_power /= 2.0
 
         # Calculate SNR
-        if noise_power > 0:
-            snr_db = 10 * np.log10(power / noise_power)
-        else:
-            snr_db = 100.0
+        snr_db = 10 * np.log10(power / noise_power) if noise_power > 0 else 100.0
 
         # Check if still locked
-        if snr_db < self.config.frequency.min_snr_db:
+        if snr_db < self.config.min_snr_db:
             self._lock_count = max(0, self._lock_count - 1)
             if self._lock_count == 0:
                 self._current_frequency = None
@@ -222,7 +208,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
             Power at the target frequency
         """
         N = len(audio)
-        k = int(0.5 + (N * freq) / self.config.audio.sample_rate)
+        k = int(0.5 + (N * freq) / self.config.sample_rate)
         w = (2.0 * np.pi * k) / N
         cosine = np.cos(w)
         sine = np.sin(w)
