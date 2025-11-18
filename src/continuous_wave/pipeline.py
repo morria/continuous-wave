@@ -2,7 +2,7 @@
 
 import time
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import DecodedCharacter, SignalStats, TimingStats
@@ -68,7 +68,7 @@ class CWDecoderPipeline:
             # Step 2: Frequency detection
             freq_stats = self.frequency_detector.detect(cleaned_audio)
             if freq_stats is not None:
-                freq_stats.timestamp = current_time
+                freq_stats = replace(freq_stats, timestamp=current_time)
                 self._state.frequency_stats = freq_stats
                 self._state.is_frequency_locked = self.frequency_detector.is_locked()
 
@@ -82,7 +82,7 @@ class CWDecoderPipeline:
 
                 # Step 4: Timing analysis
                 for event in tone_events:
-                    event.timestamp = current_time
+                    event = replace(event, timestamp=current_time)
                     morse_symbols = self.timing_analyzer.analyze(event)
 
                     # Update timing state
@@ -97,7 +97,7 @@ class CWDecoderPipeline:
 
                         # Yield each decoded character with current state
                         for char in decoded_chars:
-                            char.timestamp = current_time
+                            char = replace(char, timestamp=current_time)
                             self._state.characters_decoded += 1
                             yield char, self._state
 
