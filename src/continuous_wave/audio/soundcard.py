@@ -28,7 +28,7 @@ class SoundcardSource(AudioSource):
     config: CWConfig
     device: int | str | None = None
     _stream: Any | None = field(default=None, init=False)
-    _queue: asyncio.Queue[NDArray[np.float64]] = field(default=None, init=False)
+    _queue: asyncio.Queue[NDArray[np.float32]] = field(default=None, init=False)
     _is_running: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
@@ -85,7 +85,7 @@ class SoundcardSource(AudioSource):
             ) from e
 
         def audio_callback(
-            indata: NDArray[np.float64],
+            indata: NDArray[np.float32],
             _frames: int,
             _time_info: dict,
             status: Any,
@@ -113,7 +113,7 @@ class SoundcardSource(AudioSource):
             channels=1,
             samplerate=self.config.sample_rate,
             blocksize=self.config.chunk_size,
-            dtype=np.float64,
+            dtype=np.float32,
             callback=audio_callback,
         )
         self._stream.start()
