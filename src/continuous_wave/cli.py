@@ -286,8 +286,7 @@ def main_soundcard() -> None:
     # Create configuration
     config = CWConfig()
     config.sample_rate = args.sample_rate
-    config.freq_range[0] = args.min_freq
-    config.freq_range[1] = args.max_freq
+    config.freq_range = (args.min_freq, args.max_freq)
 
     # Create pipeline components
     audio_source = SoundcardSource(config=config, device=args.device)
@@ -353,8 +352,7 @@ def main_file() -> None:
     # Create configuration
     config = CWConfig()
     config.sample_rate = args.sample_rate
-    config.freq_range[0] = args.min_freq
-    config.freq_range[1] = args.max_freq
+    config.freq_range = (args.min_freq, args.max_freq)
 
     # Create pipeline components
     audio_source = WavFileSource(config=config, file_path=args.file)
