@@ -27,7 +27,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
     def __post_init__(self) -> None:
         """Initialize FFT window for spectral analysis."""
         # Create Hann window for FFT to reduce spectral leakage
-        self._fft_window = np.hanning(self.config.chunk_size)
+        self._fft_window = np.hanning(self.config.chunk_size).astype(np.float64)
 
     def detect(self, audio: NDArray[np.float64]) -> SignalStats | None:
         """Detect frequency and signal characteristics.
@@ -41,13 +41,14 @@ class FrequencyDetectorImpl(FrequencyDetector):
         if len(audio) < self.config.chunk_size // 2:
             return None
 
-        if self._current_frequency is None or not self.is_locked():
+        if self._current_frequency is None or not self.is_locked:
             # Not locked - use FFT for frequency search
             return self._fft_detect(audio)
         else:
             # Locked - use Goertzel for efficient tracking
             return self._goertzel_track(audio, self._current_frequency)
 
+    @property
     def is_locked(self) -> bool:
         """Check if detector is locked onto a frequency.
 
@@ -70,6 +71,9 @@ class FrequencyDetectorImpl(FrequencyDetector):
         Returns:
             SignalStats if strong signal found, None otherwise
         """
+        if self._fft_window is None:
+            return None
+
         # Apply window and compute FFT
         windowed = audio[: len(self._fft_window)] * self._fft_window
         fft = np.fft.rfft(windowed)

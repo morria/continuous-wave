@@ -20,7 +20,7 @@ class EnvelopeDetector(ToneDetector):
     """
 
     config: CWConfig
-    _envelope_filter: tuple | None = field(default=None, init=False)
+    _envelope_filter: NDArray[np.float64] | None = field(default=None, init=False)
     _zi: NDArray[np.float64] | None = field(default=None, init=False)
     _threshold: float = field(default=0.1, init=False)
     _hysteresis: float = field(default=0.02, init=False)
@@ -39,8 +39,8 @@ class EnvelopeDetector(ToneDetector):
         sos = sp_signal.butter(
             4, normalized_cutoff, btype="low", output="sos", fs=self.config.sample_rate
         )
-        self._envelope_filter = sos
-        self._zi = sp_signal.sosfilt_zi(sos)
+        self._envelope_filter = sos  # type: ignore[assignment]
+        self._zi = sp_signal.sosfilt_zi(sos).astype(np.float64)
 
         # Initialize threshold based on config squelch
         self._threshold = self.config.squelch_threshold
@@ -55,14 +55,16 @@ class EnvelopeDetector(ToneDetector):
         Returns:
             List of ToneEvent objects for state transitions
         """
-        if len(audio) == 0:
+        if len(audio) == 0 or self._envelope_filter is None or self._zi is None:
             return []
 
         # Rectify signal (absolute value)
         rectified = np.abs(audio)
 
         # Apply lowpass filter to get envelope
-        envelope, self._zi = sp_signal.sosfilt(self._envelope_filter, rectified, zi=self._zi)
+        envelope, self._zi = sp_signal.sosfilt(  # type: ignore[assignment]
+            self._envelope_filter, rectified, zi=self._zi
+        )
 
         # Detect transitions
         events: list[ToneEvent] = []
@@ -101,6 +103,6 @@ class EnvelopeDetector(ToneDetector):
     def reset(self) -> None:
         """Reset detector state."""
         if self._envelope_filter is not None:
-            self._zi = sp_signal.sosfilt_zi(self._envelope_filter)
+            self._zi = sp_signal.sosfilt_zi(self._envelope_filter).astype(np.float64)  # type: ignore[assignment]
         self._is_tone_on = False
         self._smoothed_level = 0.0

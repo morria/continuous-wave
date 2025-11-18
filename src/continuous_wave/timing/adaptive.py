@@ -65,13 +65,14 @@ class AdaptiveWPMDetector(TimingAnalyzer):
         self._last_event = event
         return symbols
 
+    @property
     def timing_stats(self) -> TimingStats | None:
         """Get current timing statistics.
 
         Returns:
             TimingStats if locked, None otherwise
         """
-        if not self.is_locked():
+        if not self.is_locked:
             return None
 
         confidence = min(1.0, self._lock_count / (self._required_lock_samples * 2))
@@ -83,6 +84,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
             num_samples=len(self._dot_durations) + len(self._dash_durations),
         )
 
+    @property
     def is_locked(self) -> bool:
         """Check if timing is locked.
 
@@ -237,6 +239,8 @@ class AdaptiveWPMDetector(TimingAnalyzer):
             self._lock_count = 1
         else:
             # Exponential moving average for smoothing
+            assert self._estimated_dot_duration is not None
+            assert self._estimated_wpm is not None
             alpha = 0.2
             new_dot = alpha * dot_estimate + (1 - alpha) * self._estimated_dot_duration
             new_wpm = 1.2 / new_dot
