@@ -70,7 +70,7 @@ class CWDecoderPipeline:
             if freq_stats is not None:
                 freq_stats = replace(freq_stats, timestamp=current_time)
                 self._state.frequency_stats = freq_stats
-                self._state.is_frequency_locked = self.frequency_detector.is_locked()
+                self._state.is_frequency_locked = self.frequency_detector.is_locked
 
                 # Update bandpass filter center frequency if locked
                 if self._state.is_frequency_locked:
@@ -89,7 +89,7 @@ class CWDecoderPipeline:
                     timing_stats = self.timing_analyzer.timing_stats()
                     if timing_stats is not None:
                         self._state.timing_stats = timing_stats
-                        self._state.is_timing_locked = self.timing_analyzer.is_locked()
+                        self._state.is_timing_locked = self.timing_analyzer.is_locked
 
                     # Step 5: Morse decoding
                     if morse_symbols:
