@@ -6,7 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from continuous_wave.config import CWConfig
-from continuous_wave.models import SignalStats
+from continuous_wave.models import AudioSample, SignalStats
 from continuous_wave.protocols import FrequencyDetector
 
 
@@ -29,24 +29,24 @@ class FrequencyDetectorImpl(FrequencyDetector):
         # Create Hann window for FFT to reduce spectral leakage
         self._fft_window = np.hanning(self.config.chunk_size).astype(np.float64)
 
-    def detect(self, audio: NDArray[np.float64]) -> SignalStats | None:
+    def detect(self, audio: AudioSample) -> SignalStats | None:
         """Detect frequency and signal characteristics.
 
         Args:
-            audio: Audio samples to analyze
+            audio: Audio sample to analyze
 
         Returns:
             SignalStats with detected frequency and SNR, or None if no signal
         """
-        if len(audio) < self.config.chunk_size // 2:
+        if audio.num_samples < self.config.chunk_size // 2:
             return None
 
         if self._current_frequency is None or not self.is_locked:
             # Not locked - use FFT for frequency search
-            return self._fft_detect(audio)
+            return self._fft_detect(audio.data)
         else:
             # Locked - use Goertzel for efficient tracking
-            return self._goertzel_track(audio, self._current_frequency)
+            return self._goertzel_track(audio.data, self._current_frequency)
 
     @property
     def is_locked(self) -> bool:

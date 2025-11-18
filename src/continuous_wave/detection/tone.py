@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 from scipy import signal as sp_signal
 
 from continuous_wave.config import CWConfig
-from continuous_wave.models import ToneEvent
+from continuous_wave.models import AudioSample, ToneEvent
 from continuous_wave.protocols import ToneDetector
 
 
@@ -46,20 +46,20 @@ class EnvelopeDetector(ToneDetector):
         self._threshold = self.config.squelch_threshold
         self._hysteresis = self.config.squelch_hysteresis
 
-    def detect(self, audio: NDArray[np.float64]) -> list[ToneEvent]:
+    def detect(self, audio: AudioSample) -> list[ToneEvent]:
         """Detect tone on/off events in audio.
 
         Args:
-            audio: Audio samples to analyze
+            audio: Audio sample to analyze
 
         Returns:
             List of ToneEvent objects for state transitions
         """
-        if len(audio) == 0 or self._envelope_filter is None or self._zi is None:
+        if audio.num_samples == 0 or self._envelope_filter is None or self._zi is None:
             return []
 
         # Rectify signal (absolute value)
-        rectified = np.abs(audio)
+        rectified = np.abs(audio.data)
 
         # Apply lowpass filter to get envelope
         envelope, self._zi = sp_signal.sosfilt(  # type: ignore[assignment]
