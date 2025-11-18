@@ -203,7 +203,7 @@ async def run_decoder_simple(pipeline: CWDecoderPipeline) -> None:
         state = pipeline.get_state()
 
         # Print statistics
-        print(f"\nStatistics:")
+        print("\nStatistics:")
         print(f"  Characters decoded: {state.characters_decoded}")
 
         if state.frequency_stats:
