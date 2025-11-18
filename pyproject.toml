@@ -12,6 +12,7 @@ license = {text = "MIT"}
 authors = [
     {name = "continuous-wave contributors"}
 ]
+keywords = ["morse", "morse-code", "cw", "ham-radio", "decoder", "dsp", "audio-processing"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -27,6 +28,12 @@ dependencies = [
     "scipy>=1.10.0",
     "sounddevice>=0.4.6",
 ]
+
+[project.urls]
+Homepage = "https://github.com/morria/continuous-wave"
+Repository = "https://github.com/morria/continuous-wave"
+Issues = "https://github.com/morria/continuous-wave/issues"
+Documentation = "https://github.com/morria/continuous-wave/blob/main/README.md"
 
 [project.optional-dependencies]
 dev = [
@@ -48,6 +55,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+continuous_wave = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

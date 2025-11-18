@@ -1,0 +1,21 @@
+# Include documentation and license files
+include README.md
+include LICENSE
+include DESIGN.md
+include CONTRIBUTING.md
+
+# Include configuration files
+include pyproject.toml
+include requirements.txt
+include requirements-dev.txt
+
+# Include type stubs if any
+recursive-include src/continuous_wave *.pyi
+recursive-include src/continuous_wave py.typed
+
+# Exclude development and test files
+recursive-exclude tests *
+recursive-exclude .github *
+exclude .gitignore
+exclude .pre-commit-config.yaml
+exclude Makefile
