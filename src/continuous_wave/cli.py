@@ -385,9 +385,30 @@ def main_file() -> None:
         audio_source.close()
 
 
-if __name__ == "__main__":
-    # Determine which mode based on script name
+def main() -> None:
+    """Main entry point that determines mode from command line arguments."""
+    # Check if the user wants file mode based on command line
+    # Support both: python -m continuous_wave.cli file <file>
+    # and the traditional script-name based approach for backward compatibility
+
+    # If called via cw-decode-file script name, use file mode
     if "file" in sys.argv[0]:
         main_file()
-    else:
-        main_soundcard()
+        return
+
+    # If first argument is a file path, assume file mode
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        from pathlib import Path
+
+        potential_file = Path(sys.argv[1])
+        # Check if it's a file (exists or has .wav extension)
+        if potential_file.suffix.lower() in [".wav", ".wave"] or potential_file.exists():
+            main_file()
+            return
+
+    # Default to soundcard mode
+    main_soundcard()
+
+
+if __name__ == "__main__":
+    main()
