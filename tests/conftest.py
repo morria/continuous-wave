@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 import pytest
+
 from continuous_wave.config import CWConfig
 from continuous_wave.logging import setup_logging
 from continuous_wave.models import AudioSample
