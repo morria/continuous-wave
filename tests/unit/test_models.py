@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-
 from continuous_wave.models import (
     AudioSample,
     DecodedCharacter,

@@ -1,7 +1,6 @@
 """Unit tests for Automatic Gain Control (AGC)."""
 
 import numpy as np
-
 from continuous_wave.config import CWConfig
 from continuous_wave.models import AudioSample
 from continuous_wave.signal.noise import AutomaticGainControl

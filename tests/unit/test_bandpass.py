@@ -1,7 +1,6 @@
 """Unit tests for Adaptive Bandpass Filter."""
 
 import numpy as np
-
 from continuous_wave.config import CWConfig
 from continuous_wave.signal.noise import AdaptiveBandpassFilter
 
