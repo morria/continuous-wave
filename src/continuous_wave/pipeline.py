@@ -63,7 +63,7 @@ class CWDecoderPipeline:
             current_time = time.time() - self._start_time
 
             # Step 1: Noise reduction (AGC → Bandpass → Squelch)
-            cleaned_audio = self.noise_pipeline.process(audio_sample.data)
+            cleaned_audio = self.noise_pipeline.process(audio_sample)
 
             # Step 2: Frequency detection
             freq_stats = self.frequency_detector.detect(cleaned_audio)
@@ -74,7 +74,7 @@ class CWDecoderPipeline:
 
                 # Update bandpass filter center frequency if locked
                 if self._state.is_frequency_locked:
-                    self.noise_pipeline.retune_filter(freq_stats.frequency)
+                    self.noise_pipeline.retune(freq_stats.frequency)
 
             # Step 3: Tone detection (only if frequency is locked)
             if self._state.is_frequency_locked and freq_stats is not None:
