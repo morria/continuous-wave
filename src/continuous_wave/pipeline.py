@@ -62,11 +62,12 @@ class CWDecoderPipeline:
             # Update timestamp relative to start
             current_time = time.time() - self._start_time
 
-            # Step 1: Noise reduction (AGC → Bandpass → Squelch)
-            cleaned_audio = self.noise_pipeline.process(audio_sample)
+            # Step 1a: Process audio for frequency detection (AGC only, no bandpass)
+            # This allows frequency detection across the full range
+            detection_audio = self.noise_pipeline.process_for_detection(audio_sample)
 
             # Step 2: Frequency detection
-            freq_stats = self.frequency_detector.detect(cleaned_audio)
+            freq_stats = self.frequency_detector.detect(detection_audio)
             if freq_stats is not None:
                 freq_stats = replace(freq_stats, timestamp=current_time)
                 self._state.frequency_stats = freq_stats
@@ -75,6 +76,9 @@ class CWDecoderPipeline:
                 # Update bandpass filter center frequency if locked
                 if self._state.is_frequency_locked:
                     self.noise_pipeline.retune(freq_stats.frequency)
+
+            # Step 1b: Full noise reduction (AGC → Bandpass → Squelch) for tone detection
+            cleaned_audio = self.noise_pipeline.process(audio_sample)
 
             # Step 3: Tone detection (only if frequency is locked)
             if self._state.is_frequency_locked and freq_stats is not None:

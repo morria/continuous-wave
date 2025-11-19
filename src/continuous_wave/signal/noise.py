@@ -306,6 +306,22 @@ class NoiseReductionPipeline:
 
         return audio
 
+    def process_for_detection(self, audio: AudioSample) -> AudioSample:
+        """Process audio for frequency detection (AGC only, no bandpass).
+
+        This method applies only AGC without bandpass filtering, which allows
+        frequency detection across the full range without being filtered out.
+
+        Args:
+            audio: Input audio sample
+
+        Returns:
+            AGC-processed audio sample (no bandpass filtering)
+        """
+        # Only apply AGC for frequency detection
+        # This ensures signals across the full frequency range can be detected
+        return self.agc.process(audio)
+
     def retune(self, center_frequency: float) -> None:
         """Retune the bandpass filter to a new center frequency.
 
