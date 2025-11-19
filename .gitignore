@@ -205,4 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Debug scripts
+debug_*.py
+
 # Test commit for pre-commit hooks
