@@ -1,6 +1,7 @@
 """Unit tests for configuration."""
 
 import pytest
+
 from continuous_wave.config import CWConfig
 
 

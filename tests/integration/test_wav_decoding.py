@@ -12,6 +12,7 @@ import asyncio
 from pathlib import Path
 
 import pytest
+
 from continuous_wave.audio.file import WavFileSource
 from continuous_wave.config import CWConfig
 from continuous_wave.decoder.morse import MorseDecoder
