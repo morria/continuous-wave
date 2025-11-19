@@ -49,7 +49,7 @@ async def test_decode():
     char_count = 0
 
     try:
-        async for char, state in pipeline.run():
+        async for char, _state in pipeline.run():
             decoded_text += char.char
             char_count += 1
             print(f"{char.char}", end="", flush=True)
@@ -57,6 +57,7 @@ async def test_decode():
     except Exception as e:
         print(f"\nError during decoding: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
@@ -64,7 +65,7 @@ async def test_decode():
 
     print("\n" + "=" * 60)
     print(f"Decoded text: '{decoded_text}'")
-    print(f"Expected:     'HELLO WORLD'")
+    print("Expected:     'HELLO WORLD'")
     print(f"Match: {decoded_text.strip() == 'HELLO WORLD'}")
     print(f"Total characters: {char_count}")
 

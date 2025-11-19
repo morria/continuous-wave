@@ -62,6 +62,7 @@ async def test_decode():
     except Exception as e:
         print(f"Error during decoding: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
@@ -69,7 +70,7 @@ async def test_decode():
 
     print("=" * 60)
     print(f"Decoded text: '{decoded_text}'")
-    print(f"Expected:     'HELLO WORLD'")
+    print("Expected:     'HELLO WORLD'")
     print(f"Match: {decoded_text.strip() == 'HELLO WORLD'}")
     print(f"Total characters: {char_count}")
 

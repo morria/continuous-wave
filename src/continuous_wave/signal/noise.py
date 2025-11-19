@@ -165,8 +165,10 @@ class AdaptiveBandpassFilter:
             Filtered audio data
         """
         # Apply filter with state
-        filtered, self.zi = signal.sosfilt(self.sos, data, zi=self.zi)
-        result: npt.NDArray[np.float32] = filtered.astype(np.float32)
+        # Type ignore due to scipy-stubs incomplete typing for sosfilt
+        filtered_output, new_zi = signal.sosfilt(self.sos, data, zi=self.zi)  # type: ignore
+        self.zi = new_zi  # type: ignore
+        result: npt.NDArray[np.float32] = np.asarray(filtered_output, dtype=np.float32)  # type: ignore
         return result
 
     def retune(self, center_frequency: float) -> None:

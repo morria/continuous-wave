@@ -46,9 +46,11 @@ async def debug_locking():
 
         # Show detections when not locked
         if not is_locked and freq_stats and chunk_num < 100:
-            print(f"Chunk {chunk_num}: freq={freq_stats.frequency:.1f} Hz, "
-                  f"SNR={freq_stats.snr_db:.1f} dB, "
-                  f"lock_count={freq_detector._lock_count}")
+            print(
+                f"Chunk {chunk_num}: freq={freq_stats.frequency:.1f} Hz, "
+                f"SNR={freq_stats.snr_db:.1f} dB, "
+                f"lock_count={freq_detector._lock_count}"
+            )
 
     audio_source.close()
 
