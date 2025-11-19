@@ -16,17 +16,19 @@ These issues prevent the core functionality from working. Must be completed firs
 
 ### Decoder Fixes (DECODER_FIXES_NEEDED.md)
 
-**Status:** Not Started
-**Estimated Effort:** 1-2 days
-**Blocking:** All integration tests (15 tests skipped)
+**Status:** ✅ COMPLETED (2025-11-19)
+**Actual Effort:** ~1 day
+**Previously Blocking:** All integration tests (15 tests skipped)
 
-- [ ] Investigate why timing analyzer fails to lock
-- [ ] Fix timestamp propagation in ToneEvent objects
-- [ ] Add debug logging to AdaptiveWPMDetector
-- [ ] Create minimal test case with known timing patterns
-- [ ] Verify lock thresholds and state machine logic
-- [ ] Ensure timing analyzer generates morse symbols after lock
-- [ ] Validate all 15 integration tests pass
+- [x] Investigate why timing analyzer fails to lock
+- [x] Fix timestamp propagation in ToneEvent objects
+- [x] Add debug logging to AdaptiveWPMDetector
+- [x] Create minimal test case with known timing patterns
+- [x] Verify lock thresholds and state machine logic
+- [x] Ensure timing analyzer generates morse symbols after lock
+- [x] Validate all 15 integration tests pass
+
+**Completion Note:** Fixed in commit 345dbcb "Fix timing analyzer locking issue in WAV file decoding"
 
 **Key Files:**
 - `src/continuous_wave/timing/adaptive.py` - Timing analyzer
@@ -244,14 +246,14 @@ This document contains:
 
 ### Overall Status
 
-- **Critical Blockers:** 0/1 complete (0%)
+- **Critical Blockers:** 1/1 complete (100%) ✅
 - **Type Safety:** 0/15 complete (0%)
 - **Infrastructure:** 0/3 sections complete (0%)
 - **Documentation:** 0/2 sections complete (0%)
 
 ### Last Updated
 
-2025-11-19 - Initial index created
+2025-11-19 - Marked decoder fixes as completed (commit 345dbcb)
 
 ---
 
