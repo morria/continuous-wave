@@ -195,9 +195,7 @@ class TestWavFileDecoding:
         )
 
     @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
+        reason="Streaming decoding implementation has character encoding issues - direct method works correctly"
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:
@@ -223,11 +221,6 @@ class TestWavFileDecoding:
             f"Note: Check signal parameters (WPM, frequency, amplitude) in test WAV generation"
         )
 
-    @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
-    )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_direct(self, wav_file: Path, config: CWConfig) -> None:
         """Test decoding WAV file using direct file reading mechanism.
@@ -256,9 +249,7 @@ class TestWavFileDecoding:
             ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
     @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
+        reason="Streaming vs direct consistency check fails due to streaming implementation issues"
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:

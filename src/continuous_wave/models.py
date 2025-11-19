@@ -121,8 +121,9 @@ class DecodedCharacter:
             raise ValueError(f"Confidence must be in [0, 1], got {self.confidence}")
         if self.timestamp < 0:
             raise ValueError(f"Timestamp must be non-negative, got {self.timestamp}")
-        if len(self.char) != 1:
-            raise ValueError(f"Character must be a single character, got '{self.char}'")
+        # Allow single characters or prosigns (which start with '<')
+        if len(self.char) != 1 and not self.char.startswith('<'):
+            raise ValueError(f"Character must be a single character or prosign, got '{self.char}'")
 
 
 @dataclass(frozen=True)
