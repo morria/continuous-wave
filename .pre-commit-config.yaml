@@ -1,33 +1,38 @@
-# Pre-commit hooks configuration
+# Pre-commit hooks configuration - MATCHES GITHUB CI WORKFLOW EXACTLY
+#
+# NOTE: A git pre-commit hook is already installed at .git/hooks/pre-commit
+#       which runs these exact checks. This file is maintained for consistency
+#       if you prefer to use the pre-commit framework instead.
+#
 # Install: pre-commit install
 # Run manually: pre-commit run --all-files
 
 repos:
-  # Code formatting with Black
+  # Code formatting check with Black (CHECK ONLY - matches CI)
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
       - id: black
         language_version: python3.11
-        args: [--line-length=100]
+        args: [--check, --line-length=100]
 
-  # Linting with ruff
+  # Linting with ruff (CHECK ONLY - matches CI)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.15
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [check, src/, tests/]
 
-  # Type checking with mypy
+  # Type checking with mypy (STRICT - matches CI exactly)
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.2
     hooks:
       - id: mypy
         additional_dependencies: [numpy, scipy-stubs]
-        args: [--strict, --ignore-missing-imports]
-        files: ^src/
+        args: [--strict]
+        files: ^src/continuous_wave/
 
-  # General pre-commit hooks
+  # General pre-commit hooks (additional safety checks)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
@@ -41,13 +46,21 @@ repos:
       - id: debug-statements
       - id: mixed-line-ending
 
-  # Local hooks for pytest
+  # Local hooks for pytest (EXACT MATCH to CI)
   - repo: local
     hooks:
       - id: pytest-check
         name: pytest
         entry: python -m pytest
-        args: [tests/, -v, --cov=continuous_wave, --cov-fail-under=90, -x]
+        args: [tests/, -v, --cov=continuous_wave, --cov-report=term-missing, --cov-report=xml, --cov-fail-under=90]
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: build-check
+        name: build package
+        entry: python -m build
+        args: [--quiet]
         language: system
         pass_filenames: false
         always_run: true

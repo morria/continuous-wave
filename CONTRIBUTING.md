@@ -190,18 +190,64 @@ Design code to be easily testable with mocks and fixtures.
 
 ## Pre-Commit Checks
 
-The pre-commit hook automatically runs:
+### Automatic GitHub Workflow Enforcement
 
-1. **Code formatting** (black)
-2. **Linting** (ruff)
-3. **Type checking** (mypy)
-4. **Tests** (pytest with 90% coverage)
+**A git pre-commit hook is automatically active** at `.git/hooks/pre-commit` that runs the **exact same checks as GitHub CI**. This ensures that Claude Code and all developers cannot commit code that would fail in CI.
 
-If any check fails, the commit is blocked. You can bypass (not recommended) with:
+The pre-commit hook runs all 5 GitHub workflow checks:
+
+1. **Black formatting check** - `black --check src/ tests/`
+2. **Ruff linting** - `ruff check src/ tests/`
+3. **MyPy type checking** - `python -m mypy src/continuous_wave --strict`
+4. **Pytest with coverage** - `pytest tests/ -v --cov=continuous_wave --cov-report=term-missing --cov-report=xml --cov-fail-under=90`
+5. **Package build** - `python -m build`
+
+### What Happens When You Commit
+
+When you run `git commit`, the hook will:
+- ✅ Run all 5 checks automatically
+- ✅ Show clear output for each check
+- ✅ Allow the commit if all checks pass
+- ❌ Block the commit if any check fails
+- 💡 Suggest quick fixes (`make format`, `make lint-fix`, etc.)
+
+### Example Output
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Pre-Commit: Running GitHub Workflow Checks
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[Black Format Check] Running...
+✓ [Black Format Check] Passed
+
+[Ruff Linting] Running...
+✓ [Ruff Linting] Passed
+
+[MyPy Type Check] Running...
+✓ [MyPy Type Check] Passed
+
+[Pytest Coverage] Running...
+✓ [Pytest Coverage] Passed
+
+[Build Package] Running...
+✓ [Build Package] Passed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ All GitHub workflow checks passed!
+✓ Commit is allowed to proceed.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Bypassing the Hook (NOT Recommended)
+
+If absolutely necessary, you can bypass the hook with:
 
 ```bash
 git commit --no-verify
 ```
+
+**WARNING:** Bypassing will result in CI failure and your PR cannot be merged.
 
 ## Continuous Integration
 
