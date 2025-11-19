@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-verbose test-coverage lint format type-check clean pre-commit all
+.PHONY: help install install-dev test test-verbose test-coverage lint format fix type-check clean pre-commit all
 
 # Default target
 .DEFAULT_GOAL := help
@@ -69,6 +69,14 @@ format-check: ## Check if code is formatted correctly
 	@echo '$(BLUE)Checking code formatting...$(NC)'
 	black --check src/ tests/
 	@echo '$(GREEN)✓ Code formatting is correct$(NC)'
+
+fix: ## Auto-fix all fixable code issues (formatting, imports, linting)
+	@echo '$(BLUE)Auto-fixing code issues...$(NC)'
+	@echo '  → Running black formatter...'
+	@black src/ tests/
+	@echo '  → Running ruff auto-fix...'
+	@ruff check --fix src/ tests/
+	@echo '$(GREEN)✓ Auto-fixes applied. Please review changes.$(NC)'
 
 type-check: ## Run type checking with mypy
 	@echo '$(BLUE)Running mypy type checker...$(NC)'
