@@ -194,10 +194,10 @@ class TestWavFileDecoding:
             f"Please create the directory and add .wav test files."
         )
 
-    @pytest.mark.skip(
-        reason="Timing analyzer not locking - tone events are generated but timing "
-        "patterns not detected. Requires investigation of AdaptiveWPMDetector.analyze() "
-        "and timing lock logic."
+    @pytest.mark.xfail(
+        reason="Known frequency detector bug causes decoding inaccuracies. "
+        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
+        "Timing analyzer now locks correctly after timestamp fix."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:
@@ -223,10 +223,10 @@ class TestWavFileDecoding:
             f"Note: Check signal parameters (WPM, frequency, amplitude) in test WAV generation"
         )
 
-    @pytest.mark.skip(
-        reason="Timing analyzer not locking - tone events are generated but timing "
-        "patterns not detected. Requires investigation of AdaptiveWPMDetector.analyze() "
-        "and timing lock logic."
+    @pytest.mark.xfail(
+        reason="Known frequency detector bug causes decoding inaccuracies. "
+        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
+        "Timing analyzer now locks correctly after timestamp fix."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_direct(self, wav_file: Path, config: CWConfig) -> None:
@@ -255,10 +255,10 @@ class TestWavFileDecoding:
                 0.0 <= char.confidence <= 1.0
             ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
-    @pytest.mark.skip(
-        reason="Timing analyzer not locking - tone events are generated but timing "
-        "patterns not detected. Requires investigation of AdaptiveWPMDetector.analyze() "
-        "and timing lock logic."
+    @pytest.mark.xfail(
+        reason="Known frequency detector bug causes decoding inaccuracies. "
+        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
+        "Timing analyzer now locks correctly after timestamp fix."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:

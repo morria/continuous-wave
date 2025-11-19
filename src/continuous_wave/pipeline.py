@@ -59,8 +59,8 @@ class CWDecoderPipeline:
             Tuples of (DecodedCharacter, CWDecoderState) for each decoded character
         """
         async for audio_sample in self.audio_source:
-            # Update timestamp relative to start
-            current_time = time.time() - self._start_time
+            # Use audio sample's timestamp (important for file-based sources)
+            current_time = audio_sample.timestamp
 
             # Step 1a: Process audio for frequency detection (AGC only, no bandpass)
             # This allows frequency detection across the full range
