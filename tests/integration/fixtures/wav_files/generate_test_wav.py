@@ -162,21 +162,14 @@ def generate_morse_audio(
             while i + space_count < len(morse_pattern) and morse_pattern[i + space_count] == " ":
                 space_count += 1
 
-            # Check if we already added an element gap after the last dot/dash
-            # (we add element_gap only when next char is dot/dash, so if previous char
-            # was dot/dash and current is space, no element_gap was added)
-            prev_char_idx = i - 1
-            already_has_element_gap = False
-            # Element gap is NOT added before spaces, so we always need full gap
-
+            # Element gaps are only added between dots/dashes, not before spaces
+            # So we always use the full gap duration here
             if space_count >= 3:
                 # Word gap is 7 dot durations total
-                # We never have element_gap before word gap, so use full word_gap
                 audio_segments.append(generate_silence(word_gap))
                 i += space_count - 1  # Skip the extra spaces
             else:
                 # Character gap is 3 dot durations total
-                # We never have element_gap before char gap, so use full char_gap
                 audio_segments.append(generate_silence(char_gap))
 
         i += 1
