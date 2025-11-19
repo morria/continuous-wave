@@ -172,6 +172,9 @@ async def run_decoder_simple(pipeline: CWDecoderPipeline) -> None:
     """
     print("CW Decoder started. Press Ctrl+C to stop.")
     print("=" * 60)
+    print()  # Blank line before output
+
+    interrupted = False
 
     try:
         async for char, _state in pipeline.run():
@@ -184,8 +187,44 @@ async def run_decoder_simple(pipeline: CWDecoderPipeline) -> None:
                 pass
 
     except KeyboardInterrupt:
-        print("\n\nDecoder stopped.")
-        print(f"Total characters decoded: {pipeline.get_state().characters_decoded}")
+        interrupted = True
+
+    finally:
+        # Always print summary, regardless of how we exited
+        print("\n")  # Ensure we're on a new line
+        print("=" * 60)
+
+        if interrupted:
+            print("Decoder stopped by user.")
+        else:
+            print("Decoding complete.")
+
+        # Get final state
+        state = pipeline.get_state()
+
+        # Print statistics
+        print("\nStatistics:")
+        print(f"  Characters decoded: {state.characters_decoded}")
+
+        if state.frequency_stats:
+            print(f"  Detected frequency: {state.frequency_stats.frequency:.1f} Hz")
+            print(f"  SNR: {state.frequency_stats.snr_db:.1f} dB")
+            print(f"  Frequency locked: {'Yes' if state.is_frequency_locked else 'No'}")
+
+        if state.timing_stats:
+            print(f"  Speed: {state.timing_stats.wpm:.1f} WPM")
+            print(f"  Dot duration: {state.timing_stats.dot_duration*1000:.1f} ms")
+            print(f"  Timing locked: {'Yes' if state.is_timing_locked else 'No'}")
+
+        # Warn if nothing was decoded
+        if state.characters_decoded == 0:
+            print("\nWarning: No characters were decoded.")
+            if not state.is_frequency_locked:
+                print("  - Frequency lock was not achieved")
+                print("  - Try adjusting --min-freq and --max-freq parameters")
+            if not state.is_timing_locked:
+                print("  - Timing lock was not achieved")
+                print("  - The signal may be too weak or noisy")
 
 
 async def run_decoder_curses(pipeline: CWDecoderPipeline, stdscr) -> None:
