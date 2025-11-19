@@ -107,9 +107,19 @@ class FrequencyDetectorImpl(FrequencyDetector):
             noise_floor = np.median(power_spectrum[freq_mask])
 
         # Calculate SNR in dB
-        snr_db = (
-            10 * np.log10(peak_power / noise_floor) if noise_floor > 0 else 100.0
-        )  # Very strong signal if noise_floor is 0
+        # Need both peak_power and noise_floor to be > 0 for valid SNR
+        # If both are near zero, there's no signal (just silence/numerical noise)
+        min_power_threshold = 1e-10  # Minimum power to consider as a real signal
+
+        if peak_power < min_power_threshold:
+            # No significant signal present
+            self._lock_count = 0
+            self._current_frequency = None
+            return None
+
+        # Calculate SNR
+        # Noise floor is zero but we have signal - assume very high SNR
+        snr_db = 10 * np.log10(peak_power / noise_floor) if noise_floor > 0 else 100.0
 
         # Check if SNR meets threshold
         if snr_db < self.config.min_snr_db:
