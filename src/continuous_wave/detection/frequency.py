@@ -21,7 +21,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
     config: CWConfig
     _current_frequency: float | None = None
     _lock_count: int = 0
-    _required_lock_samples: int = 5
+    _required_lock_samples: int = 3  # Reduced from 5 to lock faster on morse code
     _fft_window: NDArray[np.float64] | None = None
 
     def __post_init__(self) -> None:
@@ -112,9 +112,12 @@ class FrequencyDetectorImpl(FrequencyDetector):
         min_power_threshold = 1e-10  # Minimum power to consider as a real signal
 
         if peak_power < min_power_threshold:
-            # No significant signal present
-            self._lock_count = 0
-            self._current_frequency = None
+            # No significant signal present - decrement lock count but don't lose it completely
+            # This allows the detector to maintain lock through morse code gaps
+            if self._lock_count > 0:
+                self._lock_count = max(0, self._lock_count - 1)
+            if self._lock_count == 0:
+                self._current_frequency = None
             return None
 
         # Calculate SNR
@@ -123,8 +126,11 @@ class FrequencyDetectorImpl(FrequencyDetector):
 
         # Check if SNR meets threshold
         if snr_db < self.config.min_snr_db:
-            self._lock_count = 0
-            self._current_frequency = None
+            # Low SNR - decrement lock count
+            if self._lock_count > 0:
+                self._lock_count = max(0, self._lock_count - 1)
+            if self._lock_count == 0:
+                self._current_frequency = None
             return None
 
         # Update tracking state
