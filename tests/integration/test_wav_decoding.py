@@ -192,8 +192,8 @@ class TestWavFileDecoding:
 
     @pytest.mark.xfail(
         reason="Frequency detector has a bug - detects 218.8 Hz instead of actual 600 Hz tone. "
-               "WAV files are correctly generated (verified via FFT analysis). "
-               "Decoder needs fixing before these tests can pass."
+        "WAV files are correctly generated (verified via FFT analysis). "
+        "Decoder needs fixing before these tests can pass."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:
@@ -221,8 +221,8 @@ class TestWavFileDecoding:
 
     @pytest.mark.xfail(
         reason="Frequency detector has a bug - detects 218.8 Hz instead of actual 600 Hz tone. "
-               "WAV files are correctly generated (verified via FFT analysis). "
-               "Decoder needs fixing before these tests can pass."
+        "WAV files are correctly generated (verified via FFT analysis). "
+        "Decoder needs fixing before these tests can pass."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_direct(self, wav_file: Path, config: CWConfig) -> None:
@@ -253,8 +253,8 @@ class TestWavFileDecoding:
 
     @pytest.mark.xfail(
         reason="Frequency detector has a bug - detects 218.8 Hz instead of actual 600 Hz tone. "
-               "WAV files are correctly generated (verified via FFT analysis). "
-               "Decoder needs fixing before these tests can pass."
+        "WAV files are correctly generated (verified via FFT analysis). "
+        "Decoder needs fixing before these tests can pass."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:
