@@ -106,7 +106,7 @@ class EnvelopeDetector(ToneDetector):
                 events.append(
                     ToneEvent(
                         is_tone_on=True,
-                        timestamp=0.0,  # Will be set by pipeline
+                        timestamp=audio.timestamp,
                         amplitude=float(chunk_level),
                     )
                 )
@@ -117,7 +117,7 @@ class EnvelopeDetector(ToneDetector):
                 events.append(
                     ToneEvent(
                         is_tone_on=False,
-                        timestamp=0.0,  # Will be set by pipeline
+                        timestamp=audio.timestamp,
                         amplitude=float(chunk_level),
                     )
                 )

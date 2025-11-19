@@ -4,7 +4,7 @@ This module defines protocol interfaces that enable duck typing and testability.
 All components accept dependencies via these protocols.
 """
 
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator
 from typing import Any, Protocol
 
 import numpy.typing as npt
@@ -26,20 +26,30 @@ class AudioSource(Protocol):
     - SoundcardSource: Reads from system audio input
     - FileSource: Reads from WAV files
     - SyntheticSource: Generates test signals
+
+    Audio sources are async iterators that yield AudioSample instances.
     """
 
-    async def read(self, chunk_size: int) -> AsyncIterator[AudioSample]:
-        """Read audio samples in chunks.
+    def __aiter__(self) -> AsyncIterator[AudioSample]:
+        """Return async iterator.
 
-        Args:
-            chunk_size: Number of samples per chunk
-
-        Yields:
-            AudioSample instances with the specified chunk size
+        Returns:
+            AsyncIterator that yields AudioSample instances
         """
         ...
 
-    async def close(self) -> None:
+    async def __anext__(self) -> AudioSample:
+        """Get next audio sample.
+
+        Returns:
+            Next AudioSample from the source
+
+        Raises:
+            StopAsyncIteration: When no more samples are available
+        """
+        ...
+
+    def close(self) -> None:
         """Close the audio source and release resources."""
         ...
 
@@ -103,14 +113,14 @@ class ToneDetector(Protocol):
     Tone detectors identify tone on/off transitions in the audio signal.
     """
 
-    def detect(self, audio: AudioSample) -> Iterator[ToneEvent]:
+    def detect(self, audio: AudioSample) -> list[ToneEvent]:
         """Detect tone events in the audio sample.
 
         Args:
             audio: Audio sample to analyze
 
-        Yields:
-            ToneEvent instances for detected tone transitions
+        Returns:
+            List of ToneEvent instances for detected tone transitions
         """
         ...
 
@@ -125,14 +135,14 @@ class TimingAnalyzer(Protocol):
     Timing analyzers convert tone events to Morse symbols and estimate timing.
     """
 
-    def analyze(self, events: Iterator[ToneEvent]) -> Iterator[MorseSymbol]:
-        """Analyze tone events and produce Morse symbols.
+    def analyze(self, event: ToneEvent) -> list[MorseSymbol]:
+        """Analyze a tone event and produce Morse symbols.
 
         Args:
-            events: Iterator of tone events
+            event: Tone event to analyze
 
-        Yields:
-            MorseSymbol instances
+        Returns:
+            List of MorseSymbol instances
         """
         ...
 
@@ -165,14 +175,14 @@ class Decoder(Protocol):
     Decoders convert Morse symbols to text characters.
     """
 
-    def decode(self, symbols: Iterator[MorseSymbol]) -> Iterator[DecodedCharacter]:
+    def decode(self, symbols: list[MorseSymbol]) -> list[DecodedCharacter]:
         """Decode Morse symbols to characters.
 
         Args:
-            symbols: Iterator of Morse symbols
+            symbols: List of Morse symbols
 
-        Yields:
-            DecodedCharacter instances
+        Returns:
+            List of DecodedCharacter instances
         """
         ...
 

@@ -99,19 +99,8 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
-# Temporary overrides for modules with type errors (see .claude/plans/TYPING_ISSUES.md for details)
-[[tool.mypy.overrides]]
-module = [
-    "continuous_wave.cli",
-    "continuous_wave.audio.file",
-    "continuous_wave.audio.soundcard",
-    "continuous_wave.decoder.morse",
-    "continuous_wave.detection.frequency",
-    "continuous_wave.detection.tone",
-    "continuous_wave.timing.adaptive",
-    "continuous_wave.pipeline",
-]
-ignore_errors = true
+# NOTE: Protocol signatures have been fixed to match actual implementations.
+# Type checking is now enabled for all modules with strict mypy settings.
 
 [tool.black]
 line-length = 100
