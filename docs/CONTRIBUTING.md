@@ -32,6 +32,36 @@ The `.claude/SessionStart` hook will automatically configure your environment wh
 
 ## Development Workflow
 
+### Contribution Process Overview
+
+The following diagram shows the complete contribution workflow:
+
+```mermaid
+graph TD
+    A[Clone Repository] --> B[Install Dependencies]
+    B --> C[make install-dev]
+    C --> D[Hooks Auto-Install]
+    D --> E[Create Feature Branch]
+    E --> F[Write Code + Tests]
+    F --> G[Run Tests: make test]
+    G --> H{Tests Pass?}
+    H -->|No| F
+    H -->|Yes| I[Commit Changes]
+    I --> J[Pre-Commit Checks Run]
+    J --> K{All Checks Pass?}
+    K -->|No| L[Fix Issues]
+    L --> F
+    K -->|Yes| M[Push to GitHub]
+    M --> N[Create Pull Request]
+    N --> O[CI Pipeline Runs]
+    O --> P{CI Pass?}
+    P -->|No| L
+    P -->|Yes| Q[Code Review]
+    Q --> R[Address Feedback]
+    R --> Q
+    Q --> S[Approved & Merged]
+```
+
 ### Making Changes
 
 1. Create a new branch from `main`:
