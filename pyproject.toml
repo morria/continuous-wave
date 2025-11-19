@@ -47,6 +47,7 @@ dev = [
     "pytest-benchmark>=4.0.0",
     "hypothesis>=6.82.0",
     "mypy>=1.5.0",
+    "scipy-stubs>=1.16.0",
     "ruff>=0.0.280",
 ]
 performance = [
@@ -98,9 +99,7 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
-# NOTE: New modules below have protocol signature mismatches that require refactoring.
-# The implementations work correctly (100% tests passing) but don't match the Iterator-based
-# protocol signatures. This needs to be addressed in a follow-up refactoring task.
+# Temporary overrides for modules with type errors (see TYPING_ISSUES.md for details)
 [[tool.mypy.overrides]]
 module = [
     "continuous_wave.cli",
