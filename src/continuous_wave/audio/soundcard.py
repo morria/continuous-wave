@@ -28,12 +28,10 @@ class SoundcardSource(AudioSource):
     config: CWConfig
     device: int | str | None = None
     _stream: Any | None = field(default=None, init=False)
-    _queue: asyncio.Queue[NDArray[np.float32]] = field(default=None, init=False)
+    _queue: asyncio.Queue[NDArray[np.float32]] = field(
+        default_factory=lambda: asyncio.Queue(maxsize=10), init=False
+    )
     _is_running: bool = field(default=False, init=False)
-
-    def __post_init__(self) -> None:
-        """Initialize audio queue."""
-        self._queue = asyncio.Queue(maxsize=10)
 
     async def read(self) -> AudioSample:
         """Read one chunk of audio from soundcard.
@@ -53,21 +51,30 @@ class SoundcardSource(AudioSource):
             timestamp=time.time(),
         )
 
-    async def __aiter__(self) -> AsyncIterator[AudioSample]:
+    def __aiter__(self) -> AsyncIterator[AudioSample]:
         """Async iterator over audio samples.
 
-        Yields:
-            AudioSample objects continuously
+        Returns:
+            Self as async iterator
+        """
+        return self
+
+    async def __anext__(self) -> AudioSample:
+        """Get next audio sample.
+
+        Returns:
+            Next AudioSample from the soundcard
+
+        Raises:
+            StopAsyncIteration: When the stream is stopped
         """
         if not self._is_running:
             self._start_stream()
 
-        while self._is_running:
-            try:
-                sample = await self.read()
-                yield sample
-            except asyncio.CancelledError:
-                break
+        try:
+            return await self.read()
+        except asyncio.CancelledError as e:
+            raise StopAsyncIteration from e
 
     def _start_stream(self) -> None:
         """Start the audio input stream."""
@@ -126,6 +133,10 @@ class SoundcardSource(AudioSource):
             self._stream.close()
             self._stream = None
         self._is_running = False
+
+    def close(self) -> None:
+        """Close the audio input stream (alias for stop)."""
+        self.stop()
 
     def __del__(self) -> None:
         """Cleanup on deletion."""

@@ -93,19 +93,27 @@ class WavFileSource(AudioSource):
 
         return sample
 
-    async def __aiter__(self) -> AsyncIterator[AudioSample]:
+    def __aiter__(self) -> AsyncIterator[AudioSample]:
         """Async iterator over audio samples.
 
-        Yields:
-            AudioSample objects until end of file
+        Returns:
+            Self as async iterator
         """
-        while self._is_open:
-            sample = await self.read()
-            if sample is None:
-                break
-            yield sample
-            # Small delay to simulate real-time playback if desired
-            # await asyncio.sleep(0)  # Yield control to event loop
+        return self
+
+    async def __anext__(self) -> AudioSample:
+        """Get next audio sample.
+
+        Returns:
+            Next AudioSample from the file
+
+        Raises:
+            StopAsyncIteration: When end of file is reached
+        """
+        sample = await self.read()
+        if sample is None:
+            raise StopAsyncIteration
+        return sample
 
     def _bytes_to_float(self, frames: bytes) -> NDArray[np.float64]:
         """Convert raw audio bytes to float64 array.
