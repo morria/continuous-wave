@@ -25,7 +25,7 @@ class AdaptiveWPMDetector(TimingAnalyzer):
     _estimated_dot_duration: float | None = field(default=None, init=False)
     _estimated_wpm: float | None = field(default=None, init=False)
     _lock_count: int = field(default=0, init=False)
-    _required_lock_samples: int = field(default=10, init=False)
+    _required_lock_samples: int = field(default=5, init=False)  # Reduced from 10 to lock faster
 
     def analyze(self, event: ToneEvent) -> list[MorseSymbol]:
         """Analyze tone event and generate Morse symbols.
