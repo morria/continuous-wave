@@ -190,20 +190,14 @@ class TestWavFileDecoding:
             f"Please create the directory and add .wav test files."
         )
 
-    @pytest.mark.skip(reason="Requires high-quality morse code audio files")
+    @pytest.mark.xfail(
+        reason="Frequency detector has a bug - detects 218.8 Hz instead of actual 600 Hz tone. "
+               "WAV files are correctly generated (verified via FFT analysis). "
+               "Decoder needs fixing before these tests can pass."
+    )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:
         """Test decoding WAV file using streaming pipeline mechanism.
-
-        NOTE: This test is skipped by default because it requires high-quality
-        morse code audio files. The generated test files from generate_test_wav.py
-        are for demonstration purposes but may not decode accurately without
-        fine-tuning of signal parameters (SNR, timing, frequency, etc.).
-
-        To enable this test, either:
-        1. Record real morse code audio at 600Hz, 20 WPM
-        2. Use professional morse code generation software
-        3. Fine-tune the generate_test_wav.py script parameters
 
         Args:
             wav_file: Path to the WAV file to test
@@ -225,7 +219,11 @@ class TestWavFileDecoding:
             f"Note: Check signal parameters (WPM, frequency, amplitude) in test WAV generation"
         )
 
-    @pytest.mark.skip(reason="Requires high-quality morse code audio files")
+    @pytest.mark.xfail(
+        reason="Frequency detector has a bug - detects 218.8 Hz instead of actual 600 Hz tone. "
+               "WAV files are correctly generated (verified via FFT analysis). "
+               "Decoder needs fixing before these tests can pass."
+    )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_direct(self, wav_file: Path, config: CWConfig) -> None:
         """Test decoding WAV file using direct file reading mechanism.
@@ -253,7 +251,11 @@ class TestWavFileDecoding:
                 0.0 <= char.confidence <= 1.0
             ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
-    @pytest.mark.skip(reason="Requires high-quality morse code audio files")
+    @pytest.mark.xfail(
+        reason="Frequency detector has a bug - detects 218.8 Hz instead of actual 600 Hz tone. "
+               "WAV files are correctly generated (verified via FFT analysis). "
+               "Decoder needs fixing before these tests can pass."
+    )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:
         """Test that both decoding mechanisms produce consistent results.
