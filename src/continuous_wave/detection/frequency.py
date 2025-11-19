@@ -155,7 +155,9 @@ class FrequencyDetectorImpl(FrequencyDetector):
             timestamp=0.0,  # Will be set by pipeline
         )
 
-    def _goertzel_track(self, audio: NDArray[np.floating[Any]], target_freq: float) -> SignalStats | None:
+    def _goertzel_track(
+        self, audio: NDArray[np.floating[Any]], target_freq: float
+    ) -> SignalStats | None:
         """Track a specific frequency using Goertzel algorithm.
 
         More efficient than FFT when tracking a single frequency.
