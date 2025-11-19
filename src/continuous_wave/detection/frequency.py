@@ -1,6 +1,7 @@
 """Frequency detection for CW signals using FFT and Goertzel algorithm."""
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -62,7 +63,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
         self._current_frequency = None
         self._lock_count = 0
 
-    def _fft_detect(self, audio: NDArray[np.float64]) -> SignalStats | None:
+    def _fft_detect(self, audio: NDArray[np.floating[Any]]) -> SignalStats | None:
         """Detect frequency using FFT across search range.
 
         Args:
@@ -154,7 +155,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
             timestamp=0.0,  # Will be set by pipeline
         )
 
-    def _goertzel_track(self, audio: NDArray[np.float64], target_freq: float) -> SignalStats | None:
+    def _goertzel_track(self, audio: NDArray[np.floating[Any]], target_freq: float) -> SignalStats | None:
         """Track a specific frequency using Goertzel algorithm.
 
         More efficient than FFT when tracking a single frequency.
@@ -217,7 +218,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
             timestamp=0.0,  # Will be set by pipeline
         )
 
-    def _goertzel_power(self, audio: NDArray[np.float64], freq: float) -> float:
+    def _goertzel_power(self, audio: NDArray[np.floating[Any]], freq: float) -> float:
         """Calculate power at a specific frequency using Goertzel.
 
         Args:
@@ -246,4 +247,4 @@ class FrequencyDetectorImpl(FrequencyDetector):
         real = q1 - q2 * cosine
         imag = q2 * sine
         magnitude = np.sqrt(real * real + imag * imag)
-        return magnitude * magnitude
+        return float(magnitude * magnitude)

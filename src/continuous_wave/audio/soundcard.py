@@ -94,7 +94,7 @@ class SoundcardSource(AudioSource):
         def audio_callback(
             indata: NDArray[np.float32],
             _frames: int,
-            _time_info: dict,
+            _time_info: dict[str, Any],
             status: Any,
         ) -> None:
             """Callback for audio input.

@@ -80,9 +80,12 @@ class WavFileSource(AudioSource):
         if self._file_sample_rate != self.config.sample_rate:
             audio_data = self._resample(audio_data)
 
+        # Convert to float32 for AudioSample
+        audio_data_float32 = audio_data.astype(np.float32)
+
         # Update timestamp based on samples read
         sample = AudioSample(
-            data=audio_data,
+            data=audio_data_float32,
             sample_rate=self.config.sample_rate,
             timestamp=self._current_timestamp,
         )
@@ -127,18 +130,15 @@ class WavFileSource(AudioSource):
         # Determine dtype based on sample width
         if self._sample_width == 1:
             # 8-bit unsigned
-            dtype = np.uint8
-            audio = np.frombuffer(frames, dtype=dtype).astype(np.float64)
+            audio = np.frombuffer(frames, dtype=np.uint8).astype(np.float64)
             audio = (audio - 128.0) / 128.0  # Convert to signed, normalize
         elif self._sample_width == 2:
             # 16-bit signed
-            dtype = np.int16
-            audio = np.frombuffer(frames, dtype=dtype).astype(np.float64)
+            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float64)
             audio = audio / 32768.0  # Normalize
         elif self._sample_width == 4:
             # 32-bit signed
-            dtype = np.int32
-            audio = np.frombuffer(frames, dtype=dtype).astype(np.float64)
+            audio = np.frombuffer(frames, dtype=np.int32).astype(np.float64)
             audio = audio / 2147483648.0  # Normalize
         else:
             raise ValueError(f"Unsupported sample width: {self._sample_width}")
