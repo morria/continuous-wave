@@ -22,7 +22,7 @@ class FrequencyDetectorImpl(FrequencyDetector):
     config: CWConfig
     _current_frequency: float | None = None
     _lock_count: int = 0
-    _required_lock_samples: int = 3  # Reduced from 5 to lock faster on morse code
+    _required_lock_samples: int = 2  # Fast lock for CW - only need 2 consistent readings
     _fft_window: NDArray[np.float64] | None = None
 
     def __post_init__(self) -> None:

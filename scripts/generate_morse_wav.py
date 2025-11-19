@@ -96,6 +96,7 @@ def generate_morse_audio(
     wpm: float = 20.0,
     frequency: float = 600.0,
     sample_rate: int = 8000,
+    leader_silence_ms: float = 500.0,
 ) -> None:
     """Generate morse code audio and save as WAV file.
 
@@ -105,6 +106,7 @@ def generate_morse_audio(
         frequency: Tone frequency in Hz (standard is 600)
         sample_rate: Audio sample rate
         output_file: Output WAV file path
+        leader_silence_ms: Silence at beginning in milliseconds (default 500ms)
     """
     # Calculate timing based on WPM
     # Standard: PARIS = 50 dot durations
@@ -123,6 +125,11 @@ def generate_morse_audio(
 
     # Generate audio samples
     audio_samples = []
+
+    # Add leader silence for detector to initialize
+    if leader_silence_ms > 0:
+        leader_duration = leader_silence_ms / 1000.0
+        audio_samples.extend(generate_silence(leader_duration, sample_rate))
 
     for i, char in enumerate(morse):
         if char == ".":
