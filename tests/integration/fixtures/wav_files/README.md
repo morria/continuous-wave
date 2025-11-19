@@ -75,4 +75,12 @@ Simply adding a new `.wav` file to this directory will automatically include it 
 
 ## Known Issues
 
-**Frequency Detector Bug**: The current decoder has a bug where it detects 218.8 Hz instead of the actual 600 Hz tone in all WAV files. The WAV files are correctly generated (verified via FFT analysis showing peak at 599.6 Hz). The actual decoding tests are marked as expected failures (`@pytest.mark.xfail`) until the decoder is fixed. The smoke tests (which verify the pipeline runs without crashing) continue to pass for all files.
+**Decoding Inaccuracies**: Investigation shows the frequency detector works correctly (detects ~594 Hz as expected for 600 Hz signals). The current issues are with timing/decoding that cause incorrect character recognition. The WAV files are correctly generated (verified via FFT analysis showing peak at 599.6 Hz).
+
+Status of tests:
+- `test_decode_wav_streaming`: Marked as xfail - decoding produces incorrect characters
+- `test_decode_wav_direct`: Marked as xfail - decoding produces incorrect characters
+- `test_decode_consistency`: Partially unskipped - TEST.wav passes (both methods produce consistent empty result), others marked as xfail due to inconsistency between streaming and direct methods
+- Smoke tests (`test_pipeline_processes_wav_file`): All pass - pipeline runs without errors
+
+Next steps: Debug tone detection, timing analysis, or morse decoder to fix character recognition.

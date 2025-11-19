@@ -55,6 +55,30 @@ def discover_wav_files() -> list[Path]:
     return sorted(WAV_FIXTURES_DIR.glob("*.wav"))
 
 
+def discover_wav_files_with_marks() -> list:
+    """Discover WAV files with pytest marks for known failures.
+
+    Returns:
+        List of WAV file paths with pytest.param marks
+    """
+    files = discover_wav_files()
+    marked_files = []
+    for f in files:
+        # TEST.wav works, others have inconsistent decoding between streaming and direct
+        if f.name != "TEST.wav":
+            marked_files.append(
+                pytest.param(
+                    f,
+                    marks=pytest.mark.xfail(
+                        reason="Decoding inconsistency between streaming and direct methods"
+                    ),
+                )
+            )
+        else:
+            marked_files.append(f)
+    return marked_files
+
+
 async def decode_wav_file_streaming(wav_file: Path, config: CWConfig) -> tuple[str, CWDecoderState]:
     """Decode a WAV file using the streaming pipeline mechanism.
 
@@ -195,9 +219,9 @@ class TestWavFileDecoding:
         )
 
     @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
+        reason="Timing/decoding issues cause incorrect character recognition. "
+        "Frequency detector works correctly (detects ~594 Hz as expected). "
+        "Need to debug tone detection, timing analysis, or morse decoding."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:
@@ -224,9 +248,9 @@ class TestWavFileDecoding:
         )
 
     @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
+        reason="Timing/decoding issues cause incorrect character recognition. "
+        "Frequency detector works correctly (detects ~594 Hz as expected). "
+        "Need to debug tone detection, timing analysis, or morse decoding."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_direct(self, wav_file: Path, config: CWConfig) -> None:
@@ -255,12 +279,7 @@ class TestWavFileDecoding:
                 0.0 <= char.confidence <= 1.0
             ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
-    @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
-    )
-    @pytest.mark.parametrize("wav_file", discover_wav_files())
+    @pytest.mark.parametrize("wav_file", discover_wav_files_with_marks())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:
         """Test that both decoding mechanisms produce consistent results.
 
