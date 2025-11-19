@@ -243,11 +243,11 @@ The library is organized into modular components:
 - **timing/**: WPM detection and timing analysis
 - **decoder/**: Morse code decoding logic
 
-See [DESIGN.md](DESIGN.md) for detailed architecture documentation.
+See [DESIGN.md](docs/DESIGN.md) for detailed architecture documentation.
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 ### Quick Contribution Guide
 
@@ -273,4 +273,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Repository**: https://github.com/morria/continuous-wave
 - **Issue Tracker**: https://github.com/morria/continuous-wave/issues
-- **Documentation**: [README.md](README.md), [DESIGN.md](DESIGN.md), [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Documentation**: [README.md](README.md), [DESIGN.md](docs/DESIGN.md), [CONTRIBUTING.md](docs/CONTRIBUTING.md)
