@@ -52,7 +52,45 @@ The `.claude/SessionStart` hook will automatically configure your environment wh
    git commit -m "Add feature: description"
    ```
 
+5. **(Recommended)** Before creating a PR, run the PR review:
+   ```
+   /pre-pr
+   ```
+   This catches issues early and ensures your PR will pass CI.
+
 The pre-commit hook will automatically run all checks before allowing the commit.
+
+### Claude Code PR Review Workflow (Recommended!)
+
+**If you're using Claude Code**, we have a specialized PR review agent that catches issues before you create a PR:
+
+1. After completing your task, run the pre-PR review:
+   ```
+   /pre-pr
+   ```
+
+2. The review agent will:
+   - Run all CI checks (black, ruff, mypy, pytest, build)
+   - Critically analyze your code for quality and maintainability
+   - Check file organization and architecture
+   - Verify Pythonic patterns and best practices
+   - Assess contributor-friendliness
+
+3. Fix any issues identified:
+   - **Blocking issues**: Must be fixed before PR
+   - **Important issues**: Should be fixed for code quality
+   - **Suggestions**: Nice-to-have improvements
+
+4. Create your PR once all checks pass
+
+**Benefits:**
+- ✅ Catches all issues that CI would catch
+- ✅ Ensures high code quality and maintainability
+- ✅ Faster PR reviews (reviewers see clean code)
+- ✅ Consistent with project standards
+- ✅ Learning tool for Python best practices
+
+For more details, see [`.claude/README.md`](../.claude/README.md).
 
 ### Available Make Targets
 

@@ -132,8 +132,13 @@ class AdaptiveBandpassFilter:
         # Design the filter
         self._design_filter()
 
-    def _design_filter(self) -> None:
-        """Design the bandpass filter using current parameters."""
+    def _design_filter(self, reset_state: bool = True) -> None:
+        """Design the bandpass filter using current parameters.
+
+        Args:
+            reset_state: If True, reset filter state to step response initial conditions.
+                        If False, preserve the existing state structure (zeros).
+        """
         # Compute low and high cutoff frequencies
         low_freq = self.center_frequency - self.bandwidth / 2.0
         high_freq = self.center_frequency + self.bandwidth / 2.0
@@ -152,8 +157,15 @@ class AdaptiveBandpassFilter:
             output="sos",
         )
 
-        # Initialize filter state
-        self.zi = signal.sosfilt_zi(self.sos)
+        # Initialize or reset filter state
+        if reset_state:
+            # Use step response initial conditions for initial setup
+            self.zi = signal.sosfilt_zi(self.sos)
+        else:
+            # When retuning, use zeros to avoid transients
+            # Each second-order section has 2 state variables
+            num_sections = self.sos.shape[0]
+            self.zi = np.zeros((num_sections, 2))
 
     def filter(self, data: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
         """Filter the input data.
@@ -177,7 +189,8 @@ class AdaptiveBandpassFilter:
             center_frequency: New center frequency in Hz
         """
         self.center_frequency = center_frequency
-        self._design_filter()
+        # Don't reset state when retuning to avoid transients
+        self._design_filter(reset_state=False)
 
     def reset(self) -> None:
         """Reset filter state."""
