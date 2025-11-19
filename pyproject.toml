@@ -145,19 +145,18 @@ branch = true
 omit = [
     "*/tests/*",
     "*/performance/cython/*",
-    # Temporarily exclude new modules pending test coverage
+    # Exclude CLI and I/O modules (less critical, hardware-dependent)
     "*/cli.py",
     "*/audio/__init__.py",
     "*/audio/file.py",
     "*/audio/soundcard.py",
+    # Exclude __init__.py files (just exports)
     "*/decoder/__init__.py",
-    "*/decoder/morse.py",
     "*/detection/__init__.py",
-    "*/detection/frequency.py",
-    "*/detection/tone.py",
     "*/timing/__init__.py",
-    "*/timing/adaptive.py",
-    "*/pipeline.py",
+    # Exclude frequency detector (has known bugs, needs fixing first)
+    "*/detection/frequency.py",
+    # Exclude protocol definitions
     "*/protocols.py",
 ]
 
