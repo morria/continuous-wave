@@ -2,7 +2,7 @@
 
 import time
 from collections.abc import AsyncIterator
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import DecodedCharacter, SignalStats, TimingStats
@@ -44,12 +44,11 @@ class CWDecoderPipeline:
     timing_analyzer: TimingAnalyzer
     decoder: Decoder
 
-    _state: CWDecoderState = None
-    _start_time: float = 0.0
+    _state: CWDecoderState = field(default_factory=CWDecoderState, init=False)
+    _start_time: float = field(default=0.0, init=False)
 
     def __post_init__(self) -> None:
         """Initialize pipeline state."""
-        self._state = CWDecoderState()
         self._start_time = time.time()
 
     async def run(self) -> AsyncIterator[tuple[DecodedCharacter, CWDecoderState]]:

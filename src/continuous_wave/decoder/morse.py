@@ -211,7 +211,7 @@ class MorseDecoder(Decoder):
                 best_match = char
 
         # Only accept fuzzy matches with small edit distance
-        if min_distance <= 1:
+        if min_distance <= 1 and best_match is not None:
             # Confidence decreases with edit distance
             confidence = 1.0 - (min_distance / 3.0)
             return best_match, max(0.3, confidence)
@@ -234,7 +234,7 @@ class MorseDecoder(Decoder):
         if len(s2) == 0:
             return len(s1)
 
-        previous_row = range(len(s2) + 1)
+        previous_row = list(range(len(s2) + 1))
         for i, c1 in enumerate(s1):
             current_row = [i + 1]
             for j, c2 in enumerate(s2):

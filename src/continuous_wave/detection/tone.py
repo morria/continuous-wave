@@ -41,7 +41,7 @@ class EnvelopeDetector(ToneDetector):
         sos = sp_signal.butter(
             4, normalized_cutoff, btype="low", output="sos", fs=self.config.sample_rate
         )
-        self._envelope_filter = sos  # type: ignore[assignment]
+        self._envelope_filter = sos
         # Initialize filter state to zeros (not step response initial conditions)
         # Each section in SOS has 2 state variables
         num_sections = sos.shape[0]
@@ -106,7 +106,7 @@ class EnvelopeDetector(ToneDetector):
                 events.append(
                     ToneEvent(
                         is_tone_on=True,
-                        timestamp=0.0,  # Will be set by pipeline
+                        timestamp=audio.timestamp,
                         amplitude=float(chunk_level),
                     )
                 )
@@ -117,7 +117,7 @@ class EnvelopeDetector(ToneDetector):
                 events.append(
                     ToneEvent(
                         is_tone_on=False,
-                        timestamp=0.0,  # Will be set by pipeline
+                        timestamp=audio.timestamp,
                         amplitude=float(chunk_level),
                     )
                 )
@@ -128,7 +128,7 @@ class EnvelopeDetector(ToneDetector):
         """Reset detector state."""
         if self._envelope_filter is not None:
             # Reset filter state to zeros
-            num_sections = self._envelope_filter.shape[0]  # type: ignore[union-attr]
+            num_sections = self._envelope_filter.shape[0]
             self._zi = np.zeros((num_sections, 2), dtype=np.float64)
         self._is_tone_on = False
         self._smoothed_level = 0.0
