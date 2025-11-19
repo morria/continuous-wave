@@ -25,11 +25,8 @@ class AdaptiveWPMDetector(TimingAnalyzer):
     _estimated_dot_duration: float | None = field(default=None, init=False)
     _estimated_wpm: float | None = field(default=None, init=False)
     _lock_count: int = field(default=0, init=False)
-    _required_lock_samples: int = field(default=5, init=False)  # Reduced from 10 to lock faster
-    _buffered_events: deque[ToneEvent] = field(
-        default_factory=lambda: deque(maxlen=100), init=False
-    )  # Buffer events until locked
-    _has_emitted_buffered: bool = field(default=False, init=False)  # Track if buffer was replayed
+    # Immediate lock - bootstrap from first sample for fast acquisition
+    _required_lock_samples: int = field(default=1, init=False)
 
     def analyze(self, event: ToneEvent) -> list[MorseSymbol]:
         """Analyze tone event and generate Morse symbols.
@@ -41,20 +38,6 @@ class AdaptiveWPMDetector(TimingAnalyzer):
             List of MorseSymbol objects (may be empty if analysis incomplete)
         """
         symbols: list[MorseSymbol] = []
-
-        # Check if we just locked and need to replay buffered events
-        if self.is_locked and not self._has_emitted_buffered and len(self._buffered_events) > 1:
-            # Replay all buffered events with correct timing
-            symbols.extend(self._replay_buffered_events())
-            self._has_emitted_buffered = True
-            # Don't process current event yet - it will be added to buffer below
-            # and processed normally next time
-            self._buffered_events.append(event)
-            return symbols
-
-        # Buffer events until we're locked
-        if not self.is_locked:
-            self._buffered_events.append(event)
 
         if self._last_event is None:
             # First event - just record it
@@ -72,18 +55,13 @@ class AdaptiveWPMDetector(TimingAnalyzer):
             # Tone turned off - this was a tone duration (dot or dash)
             symbol = self._classify_tone(duration)
             if symbol is not None:
-                # Only emit symbols after we're locked (for regular processing)
-                # Buffered events will be replayed when we lock
-                if self.is_locked and self._has_emitted_buffered:
-                    symbols.append(symbol)
+                symbols.append(symbol)
 
         elif not self._last_event.is_tone_on and event.is_tone_on:
             # Tone turned on - previous duration was a gap
             gap_symbol = self._classify_gap(duration)
             if gap_symbol is not None:
-                # Only emit symbols after we're locked
-                if self.is_locked and self._has_emitted_buffered:
-                    symbols.append(gap_symbol)
+                symbols.append(gap_symbol)
 
         self._last_event = event
         return symbols
@@ -127,94 +105,6 @@ class AdaptiveWPMDetector(TimingAnalyzer):
         self._estimated_dot_duration = None
         self._estimated_wpm = None
         self._lock_count = 0
-        self._buffered_events.clear()
-        self._has_emitted_buffered = False
-
-    def _replay_buffered_events(self) -> list[MorseSymbol]:
-        """Replay buffered tone events with correct timing.
-
-        This is called once when timing locks to re-analyze all buffered
-        events with the now-known timing parameters.
-
-        Returns:
-            List of MorseSymbol objects from re-analyzing buffered events
-        """
-        symbols: list[MorseSymbol] = []
-
-        if len(self._buffered_events) < 2:
-            return symbols
-
-        # Re-analyze all buffered events with correct timing
-        prev_event = None
-        last_valid_tone = False  # Track if last emitted symbol was a valid tone
-
-        for event in self._buffered_events:
-            if prev_event is None:
-                prev_event = event
-                continue
-
-            duration = event.timestamp - prev_event.timestamp
-
-            if duration <= 0:
-                prev_event = event
-                continue
-
-            if prev_event.is_tone_on and not event.is_tone_on:
-                # Tone duration (dot or dash)
-                # Re-classify with current timing
-                symbol = self._reclassify_tone(duration)
-                if symbol is not None:
-                    symbols.append(symbol)
-                    last_valid_tone = True
-                else:
-                    last_valid_tone = False
-
-            elif not prev_event.is_tone_on and event.is_tone_on:
-                # Gap duration - only emit if we've had a valid tone before
-                if last_valid_tone:
-                    gap_symbol = self._classify_gap(duration)
-                    if gap_symbol is not None:
-                        symbols.append(gap_symbol)
-
-            prev_event = event
-
-        return symbols
-
-    def _reclassify_tone(self, duration: float) -> MorseSymbol | None:
-        """Re-classify a tone duration without updating statistics.
-
-        This is used when replaying buffered events - we use the current
-        timing estimate but don't add to statistics (already added during
-        initial pass).
-
-        Args:
-            duration: Tone duration in seconds
-
-        Returns:
-            MorseSymbol for dot or dash, or None if it's an artifact
-        """
-        if self._estimated_dot_duration is None:
-            return None
-
-        # Filter out very short tones that are likely artifacts
-        # Use same threshold as in _update_timing_estimate (30ms)
-        if duration < 0.030:
-            return None
-
-        threshold = self._estimated_dot_duration * 2.0
-
-        if duration < threshold:
-            return MorseSymbol(
-                element=MorseElement.DOT,
-                duration=duration,
-                timestamp=0.0,
-            )
-        else:
-            return MorseSymbol(
-                element=MorseElement.DASH,
-                duration=duration,
-                timestamp=0.0,
-            )
 
     def _classify_tone(self, duration: float) -> MorseSymbol | None:
         """Classify a tone duration as dot or dash.
@@ -319,63 +209,17 @@ class AdaptiveWPMDetector(TimingAnalyzer):
         if not self._dot_durations and not self._dash_durations:
             return
 
-        # Require minimum samples before establishing initial timing
-        # This prevents early artifacts from corrupting the timing estimate
-        # We need at least 2 samples, with preference for having both dots and dashes
-        if self._estimated_dot_duration is None:
-            total_samples = len(self._dot_durations) + len(self._dash_durations)
-            # Require at least 2 samples total, or 2 of the same type
-            # This allows faster locking while still filtering out single bad samples
-            has_multiple_dots = len(self._dot_durations) >= 2
-            has_multiple_dashes = len(self._dash_durations) >= 2
-            has_mixed = len(self._dot_durations) >= 1 and len(self._dash_durations) >= 1
-
-            if not (has_multiple_dots or has_multiple_dashes or (has_mixed and total_samples >= 2)):
-                # Not enough samples yet to establish timing
-                return
-
-        # Filter outliers before calculating timing
-        # Use adaptive filtering based on the distribution of samples
-        # This is more robust than fixed thresholds
-        def filter_outliers(durations: list[float]) -> list[float]:
-            if len(durations) < 3:
-                # Not enough samples for robust filtering, use minimal threshold
-                return [d for d in durations if 0.025 <= d <= 0.600]
-
-            sorted_durations = sorted(durations)
-            # Use median and IQR for outlier detection
-            median = sorted_durations[len(sorted_durations) // 2]
-            q1 = sorted_durations[len(sorted_durations) // 4]
-            q3 = sorted_durations[(3 * len(sorted_durations)) // 4]
-            iqr = q3 - q1
-
-            # Filter out values more than 1.5*IQR below Q1 or above Q3
-            # This removes extreme outliers while keeping the core distribution
-            lower_bound = max(0.025, q1 - 1.5 * iqr)
-            upper_bound = min(0.600, q3 + 1.5 * iqr)
-
-            # Also filter out values less than 50% of median (likely artifacts)
-            lower_bound = max(lower_bound, median * 0.5)
-
-            return [d for d in durations if lower_bound <= d <= upper_bound]
-
-        filtered_dots = filter_outliers(list(self._dot_durations))
-        filtered_dashes = filter_outliers(list(self._dash_durations))
-
         # Calculate median dot duration from dot samples
-        if filtered_dots:
-            dot_estimate = sorted(filtered_dots)[len(filtered_dots) // 2]
-        elif filtered_dashes:
-            # Infer from dash durations (dash = 3x dot)
-            dash_estimate = sorted(filtered_dashes)[len(filtered_dashes) // 2]
-            dot_estimate = dash_estimate / 3.0
+        if self._dot_durations:
+            dot_estimate = sorted(self._dot_durations)[len(self._dot_durations) // 2]
         else:
-            # No valid samples after filtering
-            return
+            # Infer from dash durations (dash = 3x dot)
+            dash_estimate = sorted(self._dash_durations)[len(self._dash_durations) // 2]
+            dot_estimate = dash_estimate / 3.0
 
         # If we have dash durations, refine estimate
-        if filtered_dashes and filtered_dots:
-            dash_estimate = sorted(filtered_dashes)[len(filtered_dashes) // 2]
+        if self._dash_durations and self._dot_durations:
+            dash_estimate = sorted(self._dash_durations)[len(self._dash_durations) // 2]
             dot_from_dash = dash_estimate / 3.0
 
             # Weighted average (prefer dots as they're more consistent)
