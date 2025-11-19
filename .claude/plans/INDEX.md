@@ -259,6 +259,32 @@ This document contains:
 
 ## Notes for Claude Code
 
+### Using the Next Task Agent
+
+The **Next Task Agent** is an automated system that intelligently selects and executes the next most important task from this index.
+
+**Quick Start:**
+```bash
+# See all available tasks
+python scripts/next_task_agent.py --list
+
+# Preview the next task
+python scripts/next_task_agent.py --dry-run
+
+# Execute the next task (in Claude Code)
+/next-task
+```
+
+**Documentation:** See `.claude/NEXT_TASK_AGENT.md` for complete usage guide.
+
+The agent will:
+1. Select the highest priority "Not Started" task
+2. Read the detailed plan file
+3. Create and execute an implementation plan
+4. Run all tests and validation
+5. Update this INDEX.md with progress
+6. Create a pull request
+
 ### Work Prioritization
 
 1. **Start with DECODER_FIXES_NEEDED.md** - This is blocking all integration tests
