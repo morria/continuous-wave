@@ -245,6 +245,33 @@ The library is organized into modular components:
 
 See [DESIGN.md](docs/DESIGN.md) for detailed architecture documentation.
 
+## Claude Code Integration
+
+This project includes a comprehensive Claude Code setup for automated code review and quality checking:
+
+### PR Review Agent
+
+Before creating a pull request, use the PR review agent to ensure your code meets all quality standards:
+
+```
+/pre-pr
+```
+
+The agent will:
+- ✅ Run all CI checks (formatting, linting, type checking, tests, build)
+- ✅ Critically analyze code quality and maintainability
+- ✅ Verify Pythonic patterns and best practices
+- ✅ Check file organization and architecture
+- ✅ Ensure contributor-friendliness
+
+**Benefits:**
+- Catch issues before CI runs
+- Get immediate feedback on code quality
+- Learn Python best practices
+- Faster PR reviews
+
+See [`.claude/README.md`](.claude/README.md) for complete documentation.
+
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
@@ -255,9 +282,10 @@ Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) fo
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
 4. Run tests and linting (`make test lint`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+5. **(Recommended)** Run PR review if using Claude Code (`/pre-pr`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
 ## License
 
