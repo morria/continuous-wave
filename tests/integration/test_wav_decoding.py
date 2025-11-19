@@ -195,7 +195,10 @@ class TestWavFileDecoding:
         )
 
     @pytest.mark.xfail(
-        reason="Streaming decoding implementation has character encoding issues - direct method works correctly"
+        reason=(
+            "Streaming decoding implementation has character encoding issues - "
+            "direct method works correctly"
+        )
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:

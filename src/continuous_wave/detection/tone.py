@@ -4,8 +4,6 @@ from collections import deque
 from dataclasses import dataclass, field
 
 import numpy as np
-from numpy.typing import NDArray
-from scipy import signal as sp_signal
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import AudioSample, ToneEvent
@@ -27,7 +25,7 @@ class EnvelopeDetector(ToneDetector):
     _signal_floor: float = field(default=0.0, init=False)
     _signal_ceiling: float = field(default=1.0, init=False)
     _window_size: int = field(default=0, init=False)
-    _sample_buffer: deque = field(default_factory=deque, init=False)
+    _sample_buffer: deque[float] = field(default_factory=deque, init=False)
 
     def __post_init__(self) -> None:
         """Initialize envelope detector."""
