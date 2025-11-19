@@ -39,7 +39,7 @@ class CWConfig:
     min_snr_db: float = 6.0
 
     # Filtering
-    filter_bandwidth: float = 100.0
+    filter_bandwidth: float = 200.0
 
     # AGC
     agc_target: float = 0.5

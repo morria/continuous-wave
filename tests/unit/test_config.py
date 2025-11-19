@@ -21,7 +21,7 @@ class TestCWConfig:
         assert config.min_snr_db == 6.0
 
         # Filtering
-        assert config.filter_bandwidth == 100.0
+        assert config.filter_bandwidth == 200.0
 
         # AGC
         assert config.agc_target == 0.5

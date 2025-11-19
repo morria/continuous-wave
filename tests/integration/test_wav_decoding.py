@@ -9,6 +9,7 @@ for spaces. For example:
 """
 
 import asyncio
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -135,28 +136,34 @@ async def decode_wav_file_direct(
     try:
         # Use the async iterator directly
         async for audio_sample in audio_source:
+            # Use audio sample's timestamp (important for file-based sources)
+            current_time = audio_sample.timestamp
+
             # Step 1a: Process for frequency detection (AGC only)
             detection_audio = noise_pipeline.process_for_detection(audio_sample)
 
             # Step 2: Frequency detection
             freq_stats = freq_detector.detect(detection_audio)
-            if freq_stats is not None and freq_detector.is_locked:
-                # Update bandpass filter
-                noise_pipeline.retune(freq_stats.frequency)
+            if freq_stats is not None:
+                # Update bandpass filter center frequency if locked
+                if freq_detector.is_locked:
+                    noise_pipeline.retune(freq_stats.frequency)
 
             # Step 1b: Full noise reduction (AGC → Bandpass → Squelch)
             cleaned_audio = noise_pipeline.process(audio_sample)
 
-            # Step 3: Tone detection (only if frequency locked)
-            if freq_detector.is_locked:
+            # Step 3: Tone detection (only if frequency locked and signal detected)
+            if freq_detector.is_locked and freq_stats is not None:
                 tone_events = tone_detector.detect(cleaned_audio)
 
                 # Step 4: Timing analysis and decoding
                 for event in tone_events:
+                    # Set timestamp on event from audio sample
+                    event = replace(event, timestamp=current_time)
                     morse_symbols = timing_analyzer.analyze(event)
 
-                    if morse_symbols and timing_analyzer.is_locked:
-                        # Step 5: Decode morse symbols
+                    # Step 5: Decode morse symbols
+                    if morse_symbols:
                         chars = list(decoder.decode(morse_symbols))
                         decoded_chars.extend(chars)
 
@@ -255,11 +262,6 @@ class TestWavFileDecoding:
                 0.0 <= char.confidence <= 1.0
             ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
-    @pytest.mark.xfail(
-        reason="Known frequency detector bug causes decoding inaccuracies. "
-        "Frequency detector detects 218.8 Hz instead of actual 600 Hz tone. "
-        "Timing analyzer now locks correctly after timestamp fix."
-    )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:
         """Test that both decoding mechanisms produce consistent results.
