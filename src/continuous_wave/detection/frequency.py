@@ -117,11 +117,9 @@ class FrequencyDetectorImpl(FrequencyDetector):
             self._current_frequency = None
             return None
 
-        if noise_floor > 0:
-            snr_db = 10 * np.log10(peak_power / noise_floor)
-        else:
-            # Noise floor is zero, but we have signal - assume very high SNR
-            snr_db = 100.0
+        # Calculate SNR
+        # Noise floor is zero but we have signal - assume very high SNR
+        snr_db = 10 * np.log10(peak_power / noise_floor) if noise_floor > 0 else 100.0
 
         # Check if SNR meets threshold
         if snr_db < self.config.min_snr_db:
