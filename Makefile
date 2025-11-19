@@ -23,6 +23,9 @@ install-dev: ## Install development dependencies
 	@echo '$(BLUE)Installing development dependencies...$(NC)'
 	pip install -r requirements-dev.txt
 	pip install -e .
+	@echo '$(GREEN)✓ Development dependencies installed$(NC)'
+	@echo '$(BLUE)Installing pre-commit hooks...$(NC)'
+	@./hooks/install-hooks.sh
 	@echo '$(GREEN)✓ Development environment ready$(NC)'
 
 test: ## Run tests with coverage
@@ -85,6 +88,9 @@ type-check: ## Run type checking with mypy
 
 pre-commit: format lint type-check test ## Run all pre-commit checks
 	@echo '$(GREEN)✓ All pre-commit checks passed$(NC)'
+
+validate-patch: ## Validate patch before creating PR
+	@./scripts/validate-patch.sh
 
 ci: lint type-check test ## Run CI pipeline checks
 	@echo '$(GREEN)✓ All CI checks passed$(NC)'
