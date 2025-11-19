@@ -195,8 +195,9 @@ class TestWavFileDecoding:
         )
 
     @pytest.mark.skip(
-        reason="Timing analyzer not locking - tone events are generated but timing patterns "
-        "not detected. Requires investigation of AdaptiveWPMDetector.analyze() and timing lock logic."
+        reason="Timing analyzer not locking - tone events are generated but timing "
+        "patterns not detected. Requires investigation of AdaptiveWPMDetector.analyze() "
+        "and timing lock logic."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_streaming(self, wav_file: Path, config: CWConfig) -> None:
@@ -223,8 +224,9 @@ class TestWavFileDecoding:
         )
 
     @pytest.mark.skip(
-        reason="Timing analyzer not locking - tone events are generated but timing patterns "
-        "not detected. Requires investigation of AdaptiveWPMDetector.analyze() and timing lock logic."
+        reason="Timing analyzer not locking - tone events are generated but timing "
+        "patterns not detected. Requires investigation of AdaptiveWPMDetector.analyze() "
+        "and timing lock logic."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_wav_direct(self, wav_file: Path, config: CWConfig) -> None:
@@ -254,8 +256,9 @@ class TestWavFileDecoding:
             ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
     @pytest.mark.skip(
-        reason="Timing analyzer not locking - tone events are generated but timing patterns "
-        "not detected. Requires investigation of AdaptiveWPMDetector.analyze() and timing lock logic."
+        reason="Timing analyzer not locking - tone events are generated but timing "
+        "patterns not detected. Requires investigation of AdaptiveWPMDetector.analyze() "
+        "and timing lock logic."
     )
     @pytest.mark.parametrize("wav_file", discover_wav_files())
     def test_decode_consistency(self, wav_file: Path, config: CWConfig) -> None:
