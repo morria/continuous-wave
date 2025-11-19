@@ -76,7 +76,7 @@ addopts = [
     "--cov=continuous_wave",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=70",  # Temporarily lowered from 90 while fixing integration tests
+    "--cov-fail-under=90",
 ]
 asyncio_mode = "auto"
 
