@@ -57,7 +57,7 @@ class EnvelopeDetector(ToneDetector):
         events: list[ToneEvent] = []
 
         # Square the samples for RMS calculation
-        squared_samples = audio.data ** 2
+        squared_samples = audio.data**2
 
         for i, squared_sample in enumerate(squared_samples):
             # Add to buffer

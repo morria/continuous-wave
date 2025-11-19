@@ -122,7 +122,7 @@ class DecodedCharacter:
         if self.timestamp < 0:
             raise ValueError(f"Timestamp must be non-negative, got {self.timestamp}")
         # Allow single characters or prosigns (which start with '<')
-        if len(self.char) != 1 and not self.char.startswith('<'):
+        if len(self.char) != 1 and not self.char.startswith("<"):
             raise ValueError(f"Character must be a single character or prosign, got '{self.char}'")
 
 
