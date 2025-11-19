@@ -20,11 +20,11 @@ repos:
 
   # Type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.18.2
     hooks:
       - id: mypy
         additional_dependencies: [numpy, scipy-stubs]
-        args: [--strict, --ignore-missing-imports, --no-warn-unused-ignores]
+        args: [--strict, --ignore-missing-imports]
         files: ^src/
 
   # General pre-commit hooks

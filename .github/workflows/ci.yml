@@ -52,7 +52,7 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          python -m mypy src/continuous_wave --strict --no-warn-unused-ignores
+          python -m mypy src/continuous_wave --strict
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
