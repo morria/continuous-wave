@@ -1,8 +1,8 @@
 # Include documentation and license files
 include README.md
 include LICENSE
-include DESIGN.md
-include CONTRIBUTING.md
+include docs/DESIGN.md
+include docs/CONTRIBUTING.md
 
 # Include configuration files
 include pyproject.toml
