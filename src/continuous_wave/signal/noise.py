@@ -4,6 +4,8 @@ This module implements AGC, bandpass filtering, and squelch gating for robust
 signal processing in noisy environments.
 """
 
+from typing import Any, cast
+
 import numpy as np
 import numpy.typing as npt
 from scipy import signal
@@ -165,11 +167,10 @@ class AdaptiveBandpassFilter:
             Filtered audio data
         """
         # Apply filter with state
-        filter_result = signal.sosfilt(self.sos, data, zi=self.zi)
         # sosfilt returns (y, zf) when zi is provided
-        filtered: npt.NDArray[np.float64]
-        zi: npt.NDArray[np.float64]
-        filtered, zi = filter_result  # type: ignore[misc]
+        filter_output = cast(Any, signal.sosfilt(self.sos, data, zi=self.zi))
+        filtered: npt.NDArray[np.float64] = filter_output[0]
+        zi: npt.NDArray[np.float64] = filter_output[1]
         self.zi = zi
         result: npt.NDArray[np.float32] = filtered.astype(np.float32)
         return result
