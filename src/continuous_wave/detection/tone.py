@@ -1,10 +1,9 @@
 """Tone detection for CW on/off keying."""
 
+from collections import deque
 from dataclasses import dataclass, field
 
 import numpy as np
-from numpy.typing import NDArray
-from scipy import signal as sp_signal
 
 from continuous_wave.config import CWConfig
 from continuous_wave.models import AudioSample, ToneEvent
@@ -20,37 +19,26 @@ class EnvelopeDetector(ToneDetector):
     """
 
     config: CWConfig
-    _envelope_filter: NDArray[np.float64] | None = field(default=None, init=False)
-    _zi: NDArray[np.float64] | None = field(default=None, init=False)
     _threshold: float = field(default=0.1, init=False)
     _hysteresis: float = field(default=0.02, init=False)
     _is_tone_on: bool = field(default=False, init=False)
-    _smoothed_level: float = field(default=0.0, init=False)
     _signal_floor: float = field(default=0.0, init=False)
     _signal_ceiling: float = field(default=1.0, init=False)
+    _window_size: int = field(default=0, init=False)
+    _sample_buffer: deque[float] = field(default_factory=deque, init=False)
 
     def __post_init__(self) -> None:
-        """Initialize envelope detection filter."""
-        # Design lowpass filter for envelope detection
-        # Cutoff at ~50Hz to smooth envelope while preserving CW keying
-        cutoff_hz = 50.0
-        nyquist = self.config.sample_rate / 2
-        normalized_cutoff = cutoff_hz / nyquist
-
-        # 4th order Butterworth lowpass
-        sos = sp_signal.butter(
-            4, normalized_cutoff, btype="low", output="sos", fs=self.config.sample_rate
-        )
-        self._envelope_filter = sos
-        # Initialize filter state to zeros (not step response initial conditions)
-        # Each section in SOS has 2 state variables
-        num_sections = sos.shape[0]
-        self._zi = np.zeros((num_sections, 2), dtype=np.float64)
+        """Initialize envelope detector."""
+        # Window size for moving average
+        # Use 15ms window for good smoothing while maintaining CW timing accuracy
+        # At 20 WPM, dot = 60ms, so 15ms window gives 4x resolution
+        window_ms = 15.0
+        self._window_size = int(window_ms * self.config.sample_rate / 1000.0)
+        self._sample_buffer = deque(maxlen=self._window_size)
 
         # Initialize threshold based on config tone threshold
-        # Use tone_threshold which is more appropriate for envelope detection
         self._threshold = self.config.tone_threshold
-        self._hysteresis = self.config.tone_threshold * 0.3  # 30% hysteresis
+        self._hysteresis = self.config.tone_threshold * 0.5  # 50% hysteresis for stability
 
     def detect(self, audio: AudioSample) -> list[ToneEvent]:
         """Detect tone on/off events in audio.
@@ -61,76 +49,83 @@ class EnvelopeDetector(ToneDetector):
         Returns:
             List of ToneEvent objects for state transitions
         """
-        if audio.num_samples == 0 or self._envelope_filter is None or self._zi is None:
+        if audio.num_samples == 0:
             return []
 
-        # Calculate signal level directly from audio chunk
-        # Use RMS of the absolute values (simple envelope detection)
-        # This is more responsive than using a lowpass filter on small chunks
-        chunk_level = np.sqrt(np.mean(audio.data**2))
-
-        # Adaptive threshold tracking
-        # Update floor (min) and ceiling (max) with slow decay
-        floor_alpha = 0.01  # Very slow tracking for floor
-        ceiling_alpha = 0.05  # Slow tracking for ceiling
-
-        if chunk_level < self._signal_floor or self._signal_floor == 0.0:
-            self._signal_floor = chunk_level
-        else:
-            # Slowly increase floor towards current level if we're above it
-            self._signal_floor += floor_alpha * (chunk_level - self._signal_floor)
-
-        if chunk_level > self._signal_ceiling:
-            self._signal_ceiling = chunk_level
-        else:
-            # Slowly decrease ceiling towards current level if we're below it
-            self._signal_ceiling += ceiling_alpha * (chunk_level - self._signal_ceiling)
-
-        # Calculate adaptive threshold as midpoint between floor and ceiling
-        signal_range = self._signal_ceiling - self._signal_floor
-        if signal_range > 0.05:  # Only use adaptive if there's enough dynamic range
-            adaptive_threshold = self._signal_floor + signal_range * 0.5
-            adaptive_hysteresis = signal_range * 0.1
-        else:
-            # Fall back to fixed threshold if signal is weak/flat
-            adaptive_threshold = self.config.tone_threshold
-            adaptive_hysteresis = self.config.tone_threshold * 0.3
-
+        # Compute envelope using moving window RMS
+        # Process sample by sample for maximum timing precision
         events: list[ToneEvent] = []
 
-        # Hysteresis-based threshold detection
-        if not self._is_tone_on:
-            # Currently off - check for turn-on
-            if chunk_level > adaptive_threshold + adaptive_hysteresis:
-                self._is_tone_on = True
-                events.append(
-                    ToneEvent(
-                        is_tone_on=True,
-                        timestamp=audio.timestamp,
-                        amplitude=float(chunk_level),
-                    )
-                )
-        else:
-            # Currently on - check for turn-off
-            if chunk_level < adaptive_threshold - adaptive_hysteresis:
-                self._is_tone_on = False
-                events.append(
-                    ToneEvent(
-                        is_tone_on=False,
-                        timestamp=audio.timestamp,
-                        amplitude=float(chunk_level),
-                    )
-                )
+        # Square the samples for RMS calculation
+        squared_samples = audio.data**2
+
+        for i, squared_sample in enumerate(squared_samples):
+            # Add to buffer
+            self._sample_buffer.append(float(squared_sample))
+
+            # Compute RMS envelope (sqrt of mean of squares)
+            if len(self._sample_buffer) >= self._window_size // 2:  # At least half full
+                envelope_value = np.sqrt(np.mean(self._sample_buffer))
+
+                # Adaptive threshold tracking
+                # Update floor (min) and ceiling (max) with slow decay
+                floor_alpha = 0.0001  # Very slow tracking for floor
+                ceiling_alpha = 0.001  # Slow tracking for ceiling
+
+                if envelope_value < self._signal_floor or self._signal_floor == 0.0:
+                    self._signal_floor = envelope_value
+                else:
+                    self._signal_floor += floor_alpha * (envelope_value - self._signal_floor)
+
+                if envelope_value > self._signal_ceiling:
+                    self._signal_ceiling = envelope_value
+                else:
+                    self._signal_ceiling += ceiling_alpha * (envelope_value - self._signal_ceiling)
+
+                # Calculate adaptive threshold
+                signal_range = self._signal_ceiling - self._signal_floor
+                if signal_range > 0.1:  # Only use adaptive if there's enough dynamic range
+                    # Use 45% point (closer to floor) for better noise rejection
+                    adaptive_threshold = self._signal_floor + signal_range * 0.45
+                    # Use larger hysteresis for stability
+                    adaptive_hysteresis = signal_range * 0.2
+                else:
+                    # Fall back to fixed threshold
+                    adaptive_threshold = self.config.tone_threshold
+                    adaptive_hysteresis = self.config.tone_threshold * 0.5
+
+                # Calculate timestamp for this sample
+                sample_timestamp = audio.timestamp + (i / self.config.sample_rate)
+
+                # Hysteresis-based threshold detection
+                if not self._is_tone_on:
+                    # Currently off - check for turn-on
+                    if envelope_value > adaptive_threshold + adaptive_hysteresis:
+                        self._is_tone_on = True
+                        events.append(
+                            ToneEvent(
+                                is_tone_on=True,
+                                timestamp=sample_timestamp,
+                                amplitude=float(envelope_value),
+                            )
+                        )
+                else:
+                    # Currently on - check for turn-off
+                    if envelope_value < adaptive_threshold - adaptive_hysteresis:
+                        self._is_tone_on = False
+                        events.append(
+                            ToneEvent(
+                                is_tone_on=False,
+                                timestamp=sample_timestamp,
+                                amplitude=float(envelope_value),
+                            )
+                        )
 
         return events
 
     def reset(self) -> None:
         """Reset detector state."""
-        if self._envelope_filter is not None:
-            # Reset filter state to zeros
-            num_sections = self._envelope_filter.shape[0]
-            self._zi = np.zeros((num_sections, 2), dtype=np.float64)
+        self._sample_buffer.clear()
         self._is_tone_on = False
-        self._smoothed_level = 0.0
         self._signal_floor = 0.0
         self._signal_ceiling = 1.0

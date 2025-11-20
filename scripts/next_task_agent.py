@@ -19,7 +19,6 @@ import sys
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
-from typing import Optional
 
 
 class Priority(IntEnum):
@@ -42,14 +41,14 @@ class Task:
     key_files: list[str]
     success_criteria: list[str]
     priority: Priority
-    plan_file: Optional[str] = None
+    plan_file: str | None = None
 
 
 @dataclass
 class TaskSection:
     """Represents a section of related tasks."""
     title: str
-    plan_file: Optional[str]
+    plan_file: str | None
     status: str
     effort: str
     blocking: str
@@ -69,10 +68,12 @@ class IndexParser:
     def parse(self) -> list[TaskSection]:
         """Parse the index file and return all task sections."""
         sections = []
-        current_priority = None
 
         # Split by priority sections
-        priority_pattern = r'## Priority \d+: (.+?)(?=## Priority \d+:|## Reference Documents|## Progress Tracking|$)'
+        priority_pattern = (
+            r"## Priority \d+: (.+?)"
+            r"(?=## Priority \d+:|## Reference Documents|## Progress Tracking|$)"
+        )
         priority_sections = re.finditer(priority_pattern, self.content, re.DOTALL)
 
         for match in priority_sections:
@@ -92,7 +93,10 @@ class IndexParser:
                 continue
 
             # Parse subsections within this priority
-            subsection_pattern = r'### (.+?)\n\n\*\*Status:\*\* (.+?)\n\*\*Estimated Effort:\*\* (.+?)(?:\n\*\*Blocking:\*\* (.+?))?\n'
+            subsection_pattern = (
+                r"### (.+?)\n\n\*\*Status:\*\* (.+?)\n"
+                r"\*\*Estimated Effort:\*\* (.+?)(?:\n\*\*Blocking:\*\* (.+?))?\n"
+            )
             subsections = re.finditer(subsection_pattern, section_content, re.DOTALL)
 
             for subsection_match in subsections:
@@ -118,13 +122,19 @@ class IndexParser:
 
                 # Extract key files
                 key_files = []
-                key_files_match = re.search(r'\*\*Key Files:\*\*(.+?)(?:\*\*|$)', subsection_text, re.DOTALL)
+                key_files_match = re.search(
+                    r"\*\*Key Files:\*\*(.+?)(?:\*\*|$)", subsection_text, re.DOTALL
+                )
                 if key_files_match:
                     key_files = re.findall(r'- `(.+?)`', key_files_match.group(1))
 
                 # Extract success criteria
                 success_criteria = []
-                success_match = re.search(r'\*\*Success Criteria:\*\*(.+?)(?:\*\*|---|$)', subsection_text, re.DOTALL)
+                success_match = re.search(
+                    r"\*\*Success Criteria:\*\*(.+?)(?:\*\*|---|$)",
+                    subsection_text,
+                    re.DOTALL,
+                )
                 if success_match:
                     success_criteria = re.findall(r'- (.+)', success_match.group(1))
 
@@ -142,7 +152,7 @@ class IndexParser:
 
         return sections
 
-    def find_next_task(self, priority_filter: Optional[int] = None) -> Optional[TaskSection]:
+    def find_next_task(self, priority_filter: int | None = None) -> TaskSection | None:
         """Find the next task to work on (highest priority, not started)."""
         sections = self.parse()
 
