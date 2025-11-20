@@ -96,12 +96,18 @@ class MockTimingAnalyzer:
         self.symbols = symbols or []
         self._locked = locked
         self.analyze_calls = 0
+        self.flush_calls = 0
         self.reset_calls = 0
 
     def analyze(self, event: ToneEvent) -> list[MorseSymbol]:
         """Mock analyze method."""
         self.analyze_calls += 1
         return self.symbols.copy()
+
+    def flush(self) -> list[MorseSymbol]:
+        """Mock flush method."""
+        self.flush_calls += 1
+        return []
 
     @property
     def is_locked(self) -> bool:
@@ -131,12 +137,18 @@ class MockDecoder:
     def __init__(self, characters: list[DecodedCharacter] | None = None) -> None:
         self.characters = characters or []
         self.decode_calls = 0
+        self.flush_calls = 0
         self.reset_calls = 0
 
     def decode(self, symbols: list[MorseSymbol]) -> list[DecodedCharacter]:
         """Mock decode method."""
         self.decode_calls += 1
         return self.characters.copy()
+
+    def flush(self) -> list[DecodedCharacter]:
+        """Mock flush method."""
+        self.flush_calls += 1
+        return []
 
     def reset(self) -> None:
         """Reset decoder."""

@@ -146,6 +146,16 @@ class TimingAnalyzer(Protocol):
         """
         ...
 
+    def flush(self) -> list[MorseSymbol]:
+        """Flush any pending state at end of stream.
+
+        Called when the audio stream ends to process any incomplete timing state.
+
+        Returns:
+            List of MorseSymbol instances for any pending events
+        """
+        ...
+
     @property
     def timing_stats(self) -> TimingStats | None:
         """Get current timing statistics.
@@ -183,6 +193,16 @@ class Decoder(Protocol):
 
         Returns:
             List of DecodedCharacter instances
+        """
+        ...
+
+    def flush(self) -> list[DecodedCharacter]:
+        """Flush any pending pattern at end of stream.
+
+        Called when the symbol stream ends to decode any incomplete character pattern.
+
+        Returns:
+            List of DecodedCharacter instances for any pending pattern
         """
         ...
 

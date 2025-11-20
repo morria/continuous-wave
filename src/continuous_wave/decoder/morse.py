@@ -132,6 +132,26 @@ class MorseDecoder(Decoder):
 
         return characters
 
+    def flush(self) -> list[DecodedCharacter]:
+        """Flush any pending pattern at end of stream.
+
+        Decodes any accumulated morse pattern that hasn't been finalized
+        with a CHAR_GAP or WORD_GAP.
+
+        Returns:
+            List of DecodedCharacter instances for any pending pattern
+        """
+        characters: list[DecodedCharacter] = []
+
+        # Decode any pending pattern
+        if self._current_pattern:
+            char = self._decode_pattern(self._current_pattern)
+            if char is not None:
+                characters.append(char)
+            self._current_pattern.clear()
+
+        return characters
+
     def reset(self) -> None:
         """Reset decoder state."""
         self._current_pattern.clear()
