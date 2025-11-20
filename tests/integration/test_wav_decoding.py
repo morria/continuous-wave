@@ -247,9 +247,9 @@ class TestWavFileDecoding:
 
         # Verify all characters have valid confidence scores
         for char in decoded_chars:
-            assert 0.0 <= char.confidence <= 1.0, (
-                f"Invalid confidence score {char.confidence} for character '{char.char}'"
-            )
+            assert (
+                0.0 <= char.confidence <= 1.0
+            ), f"Invalid confidence score {char.confidence} for character '{char.char}'"
 
     @pytest.mark.xfail(
         reason="Streaming vs direct consistency check fails due to streaming implementation issues"
