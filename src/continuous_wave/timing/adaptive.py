@@ -110,18 +110,20 @@ class AdaptiveWPMDetector(TimingAnalyzer):
 
         # If we have a pending tone-on event, treat end-of-stream as tone-off
         # followed by a character gap
-        if self._last_event is not None and self._last_event.is_tone_on:
+        if (
+            self._last_event is not None
+            and self._last_event.is_tone_on
+            and self._estimated_dot_duration is not None
+        ):
             # Generate a synthetic tone-off event to classify the last tone
-            # Use a duration based on estimated timing if available
-            if self._estimated_dot_duration is not None:
-                # Assume a dash duration for safety
-                duration = self._estimated_dot_duration * 3.0
-                symbol = MorseSymbol(
-                    element=MorseElement.DASH,
-                    duration=duration,
-                    timestamp=0.0,
-                )
-                symbols.append(symbol)
+            # Assume a dash duration for safety
+            duration = self._estimated_dot_duration * 3.0
+            symbol = MorseSymbol(
+                element=MorseElement.DASH,
+                duration=duration,
+                timestamp=0.0,
+            )
+            symbols.append(symbol)
 
         # Always add a final CHAR_GAP to trigger decoding of any pending pattern
         if self._estimated_dot_duration is not None:

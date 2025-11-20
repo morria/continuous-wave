@@ -113,7 +113,7 @@ class CursesUI:
             row += 1
 
         if dot_duration is not None:
-            self.status_win.addstr(row, 2, f"Dot Time:  {dot_duration*1000:7.1f} ms")
+            self.status_win.addstr(row, 2, f"Dot Time:  {dot_duration * 1000:7.1f} ms")
             row += 1
 
         row += 1  # Blank line
@@ -213,7 +213,7 @@ async def run_decoder_simple(pipeline: CWDecoderPipeline) -> None:
 
         if state.timing_stats:
             print(f"  Speed: {state.timing_stats.wpm:.1f} WPM")
-            print(f"  Dot duration: {state.timing_stats.dot_duration*1000:.1f} ms")
+            print(f"  Dot duration: {state.timing_stats.dot_duration * 1000:.1f} ms")
             print(f"  Timing locked: {'Yes' if state.is_timing_locked else 'No'}")
 
         # Warn if nothing was decoded
