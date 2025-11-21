@@ -97,6 +97,45 @@ class AdaptiveWPMDetector(TimingAnalyzer):
             and self._estimated_dot_duration is not None
         )
 
+    def flush(self) -> list[MorseSymbol]:
+        """Flush any pending state at end of stream.
+
+        If there's a pending tone-on event without a corresponding tone-off,
+        generate a final CHAR_GAP to trigger decoding of the last character.
+
+        Returns:
+            List of MorseSymbol instances for any pending events
+        """
+        symbols: list[MorseSymbol] = []
+
+        # If we have a pending tone-on event, treat end-of-stream as tone-off
+        # followed by a character gap
+        if (
+            self._last_event is not None
+            and self._last_event.is_tone_on
+            and self._estimated_dot_duration is not None
+        ):
+            # Generate a synthetic tone-off event to classify the last tone
+            # Assume a dash duration for safety
+            duration = self._estimated_dot_duration * 3.0
+            symbol = MorseSymbol(
+                element=MorseElement.DASH,
+                duration=duration,
+                timestamp=0.0,
+            )
+            symbols.append(symbol)
+
+        # Always add a final CHAR_GAP to trigger decoding of any pending pattern
+        if self._estimated_dot_duration is not None:
+            char_gap = MorseSymbol(
+                element=MorseElement.CHAR_GAP,
+                duration=self._estimated_dot_duration * 3.0,
+                timestamp=0.0,
+            )
+            symbols.append(char_gap)
+
+        return symbols
+
     def reset(self) -> None:
         """Reset timing analyzer state."""
         self._last_event = None

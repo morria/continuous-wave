@@ -85,7 +85,6 @@ class CWDecoderPipeline:
 
                 # Step 4: Timing analysis
                 for event in tone_events:
-                    event = replace(event, timestamp=current_time)
                     morse_symbols = self.timing_analyzer.analyze(event)
 
                     # Update timing state
@@ -94,8 +93,8 @@ class CWDecoderPipeline:
                         self._state.timing_stats = timing_stats
                         self._state.is_timing_locked = self.timing_analyzer.is_locked
 
-                    # Step 5: Morse decoding
-                    if morse_symbols:
+                    # Step 5: Morse decoding (only if timing is locked)
+                    if morse_symbols and self._state.is_timing_locked:
                         decoded_chars = self.decoder.decode(morse_symbols)
 
                         # Yield each decoded character with current state
@@ -103,6 +102,22 @@ class CWDecoderPipeline:
                             char = replace(char, timestamp=current_time)
                             self._state.characters_decoded += 1
                             yield char, self._state
+
+        # End of stream - flush any pending state
+        # Step 6: Flush timing analyzer for any incomplete tones
+        if self._state.is_timing_locked:
+            flush_symbols = self.timing_analyzer.flush()
+            if flush_symbols:
+                decoded_chars = self.decoder.decode(flush_symbols)
+                for char in decoded_chars:
+                    self._state.characters_decoded += 1
+                    yield char, self._state
+
+        # Step 7: Flush decoder for any incomplete patterns
+        flush_chars = self.decoder.flush()
+        for char in flush_chars:
+            self._state.characters_decoded += 1
+            yield char, self._state
 
     def get_state(self) -> CWDecoderState:
         """Get current decoder state.
